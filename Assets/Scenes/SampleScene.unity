@@ -307,11 +307,16 @@ MonoBehaviour:
   - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
   - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
   - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
+  bridgePrefabs:
+  - {fileID: 4775358128559842662, guid: 793d365b1f6a6d9459d7c9b4d4fc4163, type: 3}
+  - {fileID: 4775358128559842662, guid: e2c3b24822eb1d5428fb48affebc923c, type: 3}
+  bridgeChance: 3
   tunnelStartPrefab: {fileID: 4775358128559842662, guid: ed25645ed113e1b4ea1f521ed101b152, type: 3}
   tunnelMiddlePrefab: {fileID: 4775358128559842662, guid: e3b79ca9cba2bb140bc37ed91b0c2465, type: 3}
   tunnelEndPrefab: {fileID: 4775358128559842662, guid: 3bfff395ef32d944ebf3033baa6fc6cf, type: 3}
   tunnelChance: 3
   tunnelMiddleCount: 3
+  minRoadsBetweenSpecials: 5
   playerTransform: {fileID: 1657530733}
   spawnZ: 0
   roadLength: 30
