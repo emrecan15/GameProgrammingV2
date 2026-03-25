@@ -294,6 +294,7 @@ MonoBehaviour:
   - {fileID: 4775358128559842662, guid: cf27b5773b62dbf49b377af8cf354b3a, type: 3}
   - {fileID: 4775358128559842662, guid: f14bf3972338cdd4ebef3ec5c4302cec, type: 3}
   - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
+  - {fileID: 4775358128559842662, guid: 5c358407e7dc1e442b70c0ea08a6d91d, type: 3}
   bridgePrefabs:
   - {fileID: 4775358128559842662, guid: 793d365b1f6a6d9459d7c9b4d4fc4163, type: 3}
   - {fileID: 4775358128559842662, guid: e2c3b24822eb1d5428fb48affebc923c, type: 3}
