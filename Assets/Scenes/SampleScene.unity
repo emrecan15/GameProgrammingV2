@@ -287,30 +287,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RoadManager
   roadPrefabs:
   - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
-  - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
-  - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
-  - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
-  - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
-  - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
-  - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
   - {fileID: 4775358128559842662, guid: 561a8e2288dc87240807c59bbf2664a4, type: 3}
   - {fileID: 4775358128559842662, guid: ab721de900964d446b8caac97b9bf001, type: 3}
-  - {fileID: 4775358128559842662, guid: 793d365b1f6a6d9459d7c9b4d4fc4163, type: 3}
-  - {fileID: 4775358128559842662, guid: e2c3b24822eb1d5428fb48affebc923c, type: 3}
   - {fileID: 4775358128559842662, guid: def072b4b6ce60845a66c762b1282355, type: 3}
   - {fileID: 4775358128559842662, guid: 4e0000f1a554cb946860437764993f8d, type: 3}
   - {fileID: 4775358128559842662, guid: cf27b5773b62dbf49b377af8cf354b3a, type: 3}
   - {fileID: 4775358128559842662, guid: f14bf3972338cdd4ebef3ec5c4302cec, type: 3}
   - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
-  - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
-  - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
-  - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
-  - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
-  - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
   bridgePrefabs:
   - {fileID: 4775358128559842662, guid: 793d365b1f6a6d9459d7c9b4d4fc4163, type: 3}
   - {fileID: 4775358128559842662, guid: e2c3b24822eb1d5428fb48affebc923c, type: 3}
-  bridgeChance: 3
+  bridgeChance: 1
   tunnelStartPrefab: {fileID: 4775358128559842662, guid: ed25645ed113e1b4ea1f521ed101b152, type: 3}
   tunnelMiddlePrefab: {fileID: 4775358128559842662, guid: e3b79ca9cba2bb140bc37ed91b0c2465, type: 3}
   tunnelEndPrefab: {fileID: 4775358128559842662, guid: 3bfff395ef32d944ebf3033baa6fc6cf, type: 3}
@@ -924,7 +911,7 @@ Transform:
   m_GameObject: {fileID: 619215106}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.01, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
