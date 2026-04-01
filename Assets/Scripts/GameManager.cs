@@ -1,5 +1,5 @@
 using UnityEngine;
-using TMPro; // Ekrana yazý yazdýrmak için gereken kütüphane!
+using TMPro; // textmash lib
 
 public class GameManager : MonoBehaviour
 {
@@ -7,8 +7,8 @@ public class GameManager : MonoBehaviour
 
 	[Header("Referanslar")]
 	public Transform playerTransform;
-	public TextMeshProUGUI scoreText; // Ekrana baðlayacaðýmýz yazý objesi
-	public TextMeshProUGUI coinText;  // YENÝ: Ekrana baðlayacaðýmýz altýn yazý objesi
+	public TextMeshProUGUI scoreText; 
+	public TextMeshProUGUI coinText;  
 
 	[Header("Skor Bilgileri")]
 	public float currentScore;
@@ -32,7 +32,7 @@ public class GameManager : MonoBehaviour
 			startZPos = playerTransform.position.z;
 		}
 
-		// YENÝ: Oyun baþladýðýnda ekrandaki altýn yazýsýný 0 olarak ayarla
+		// default coin text = 0 when the game starts
 		UpdateCoinUI();
 	}
 
@@ -40,13 +40,13 @@ public class GameManager : MonoBehaviour
 	{
 		if (isGameActive && playerTransform != null)
 		{
-			// Mesafe Skoru
+			
 			float distanceScore = playerTransform.position.z - startZPos;
 
-			// Toplam Skor
+			
 			currentScore = distanceScore + (totalCoins * 10);
 
-			// SKORU EKRANA YAZDIRMA KISMI:
+			
 			if (scoreText != null)
 			{
 				scoreText.text = "Score: " + Mathf.FloorToInt(currentScore).ToString();
@@ -58,11 +58,11 @@ public class GameManager : MonoBehaviour
 	{
 		totalCoins++;
 
-		// YENÝ: Altýn alýndýðýnda ekrandaki yazýyý da anýnda güncelle
+		
 		UpdateCoinUI();
 	}
 
-	// YENÝ: Altýn metnini güncelleyen yardýmcý fonksiyon
+	
 	private void UpdateCoinUI()
 	{
 		if (coinText != null)

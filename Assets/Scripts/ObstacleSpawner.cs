@@ -9,11 +9,11 @@ public class ObstacleSpawner : MonoBehaviour
     private List<List<GameObject>> poolList;
 
     [Header("Havuz Ayarlarý (Altýn)")]
-    public GameObject coinPrefab; // Altýn prefabýmýzý buraya koyacaðýz
+    public GameObject coinPrefab; 
     public int coinPoolSize = 10;
     private List<GameObject> coinPool;
     [Range(0f, 100f)]
-    public float coinSpawnChance = 60f; // %60 ihtimalle altýn çýksýn
+    public float coinSpawnChance = 60f; // coin spawn chance 60%
 
     [Header("Doðma Ayarlarý")]
     public Transform playerTransform;
@@ -27,7 +27,7 @@ public class ObstacleSpawner : MonoBehaviour
 
     void Start()
     {
-        // 1. ENGEL HAVUZUNU OLUÞTUR
+        // create obstacle pool
         poolList = new List<List<GameObject>>();
         for (int i = 0; i < obstaclePrefabs.Length; i++)
         {
@@ -41,7 +41,7 @@ public class ObstacleSpawner : MonoBehaviour
             poolList.Add(objectPool);
         }
 
-        // 2. ALTIN HAVUZUNU OLUÞTUR
+        // create coin pool
         coinPool = new List<GameObject>();
         for (int i = 0; i < coinPoolSize; i++)
         {
@@ -64,10 +64,10 @@ public class ObstacleSpawner : MonoBehaviour
 
     void SpawnObstacleAndCoin()
     {
-        // --- ENGEL ÇIKARMA ---
+      
         int randomObstacleIndex = Random.Range(0, obstaclePrefabs.Length);
         GameObject obstacle = GetPooledObstacle(randomObstacleIndex);
-        int obstacleLane = Random.Range(0, 3); // Engelin çýkacaðý þerit
+        int obstacleLane = Random.Range(0, 3); 
 
         if (obstacle != null)
         {
@@ -77,13 +77,13 @@ public class ObstacleSpawner : MonoBehaviour
             obstacle.SetActive(true);
         }
 
-        // --- ALTIN ÇIKARMA ---
+        
         if (Random.Range(0f, 100f) <= coinSpawnChance)
         {
             GameObject coin = GetPooledCoin();
             if (coin != null)
             {
-                // Altýn, engelin OLAMADIÐI rastgele bir þeritte çýksýn ki üst üste binmesinler
+                
                 int coinLane;
                 do
                 {
@@ -98,7 +98,7 @@ public class ObstacleSpawner : MonoBehaviour
         }
     }
 
-    // ENGEL HAVUZU KONTROLÜ
+    
     GameObject GetPooledObstacle(int index)
     {
         for (int i = 0; i < poolList[index].Count; i++)
@@ -112,7 +112,7 @@ public class ObstacleSpawner : MonoBehaviour
         return newObj;
     }
 
-    // ALTIN HAVUZU KONTROLÜ
+    
     GameObject GetPooledCoin()
     {
         for (int i = 0; i < coinPool.Count; i++)
