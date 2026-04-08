@@ -50,7 +50,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 855963877446034142}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
@@ -162,7 +162,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1718226766537222801}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
@@ -274,7 +274,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3686145380598869045}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
@@ -386,7 +386,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3906328080437335598}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
@@ -559,7 +559,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5976637959729206382}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
@@ -671,7 +671,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6551979032002418747}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
@@ -783,7 +783,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7167231420152833195}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
@@ -895,7 +895,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7297208322289144789}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
@@ -1008,7 +1008,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8152784561680185175}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
@@ -1078,6 +1078,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9019710069477956873}
     m_Modifications:
+    - target: {fileID: 2955070369916086610, guid: 29a0ed36fbe4e164496d288ff2bcd646, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3603575316738394247, guid: 29a0ed36fbe4e164496d288ff2bcd646, type: 3}
       propertyPath: m_Name
       value: Dumpster 2
@@ -1140,6 +1144,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9019710069477956873}
     m_Modifications:
+    - target: {fileID: 5742155199763456903, guid: 5c35809e686dc434eae5b1456854ecff, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6102597170479727186, guid: 5c35809e686dc434eae5b1456854ecff, type: 3}
       propertyPath: m_Name
       value: Road Barrier 1 (2)
@@ -1246,6 +1254,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6761904445191622464, guid: b38f5b590b91d4e48a126d722896fd60, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1308,6 +1320,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6911621111668902666, guid: 8a0f53613d652124aa449c4eb095e61c, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1326,6 +1342,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9019710069477956873}
     m_Modifications:
+    - target: {fileID: 7558876269595290317, guid: 2f5839188468811409c2e7b6b51a48a8, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8351496265916533528, guid: 2f5839188468811409c2e7b6b51a48a8, type: 3}
       propertyPath: m_Name
       value: Mailbox 1
@@ -1388,6 +1408,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9019710069477956873}
     m_Modifications:
+    - target: {fileID: 155354015668433907, guid: 596557109d929d443a1db8ece53c8ae1, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1327648727854680220, guid: 596557109d929d443a1db8ece53c8ae1, type: 3}
       propertyPath: m_LocalPosition.x
       value: 5.981047
@@ -1494,6 +1518,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Street Lamp 1 (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 8534741238634217827, guid: 84c7d06bab11d5d4cb50a7de9558474b, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1593,6 +1621,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Trash Can 2
       objectReference: {fileID: 0}
+    - target: {fileID: 1488746130296964190, guid: 3ac0953e273e30b45acee5881b990945, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1654,6 +1686,10 @@ PrefabInstance:
     - target: {fileID: 7886226810130931894, guid: 84c7d06bab11d5d4cb50a7de9558474b, type: 3}
       propertyPath: m_Name
       value: Street Lamp 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8534741238634217827, guid: 84c7d06bab11d5d4cb50a7de9558474b, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1754,6 +1790,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6911621111668902666, guid: 8a0f53613d652124aa449c4eb095e61c, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1772,6 +1812,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9019710069477956873}
     m_Modifications:
+    - target: {fileID: 5046994071175075960, guid: 6a66f1d592162d0488af3f95ad583fda, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6215436439157170967, guid: 6a66f1d592162d0488af3f95ad583fda, type: 3}
       propertyPath: m_LocalPosition.x
       value: -5.83
@@ -1834,6 +1878,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9019710069477956873}
     m_Modifications:
+    - target: {fileID: 635403306413745224, guid: 0ea99188905abb14e965124fba5889d4, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1428093535093638557, guid: 0ea99188905abb14e965124fba5889d4, type: 3}
       propertyPath: m_Name
       value: Zebra Crossing (1)
@@ -1896,6 +1944,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9019710069477956873}
     m_Modifications:
+    - target: {fileID: 635403306413745224, guid: 0ea99188905abb14e965124fba5889d4, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1428093535093638557, guid: 0ea99188905abb14e965124fba5889d4, type: 3}
       propertyPath: m_Name
       value: Zebra Crossing
@@ -1958,6 +2010,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9019710069477956873}
     m_Modifications:
+    - target: {fileID: 5742155199763456903, guid: 5c35809e686dc434eae5b1456854ecff, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6102597170479727186, guid: 5c35809e686dc434eae5b1456854ecff, type: 3}
       propertyPath: m_Name
       value: Road Barrier 1 (1)
@@ -2020,6 +2076,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9019710069477956873}
     m_Modifications:
+    - target: {fileID: 6918052595552317589, guid: a4096e55654c2c34db8278fc062738a8, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8091544602886179834, guid: a4096e55654c2c34db8278fc062738a8, type: 3}
       propertyPath: m_LocalPosition.x
       value: 5.81
@@ -2082,6 +2142,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9019710069477956873}
     m_Modifications:
+    - target: {fileID: 752684890616913412, guid: 9b7ef8f73e61e4c498ca9cd897352333, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1257329598625611729, guid: 9b7ef8f73e61e4c498ca9cd897352333, type: 3}
       propertyPath: m_Name
       value: Traffic Light 6
@@ -2188,6 +2252,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6911621111668902666, guid: 8a0f53613d652124aa449c4eb095e61c, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2206,6 +2274,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9019710069477956873}
     m_Modifications:
+    - target: {fileID: 3048324105597878751, guid: 5215971f383b3354b93f853e9b9f4abb, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3552547287861534730, guid: 5215971f383b3354b93f853e9b9f4abb, type: 3}
       propertyPath: m_Name
       value: Fire Hydrant
@@ -2268,6 +2340,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9019710069477956873}
     m_Modifications:
+    - target: {fileID: 5742155199763456903, guid: 5c35809e686dc434eae5b1456854ecff, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6102597170479727186, guid: 5c35809e686dc434eae5b1456854ecff, type: 3}
       propertyPath: m_Name
       value: Road Barrier 1
@@ -2374,6 +2450,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6911621111668902666, guid: 8a0f53613d652124aa449c4eb095e61c, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2392,6 +2472,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9019710069477956873}
     m_Modifications:
+    - target: {fileID: 492582170878600298, guid: 9db28b8e527f9824494b5d4aca73f1c2, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1629507032815443717, guid: 9db28b8e527f9824494b5d4aca73f1c2, type: 3}
       propertyPath: m_LocalPosition.x
       value: 5.33

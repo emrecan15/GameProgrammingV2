@@ -1,77 +1,125 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Splines;
+using Unity.Mathematics;
 
 public class CarController : MonoBehaviour
 {
-	[Header("Temel Hareket")]
-	public float laneDistance = 3.0f;
-	public float forwardSpeed = 20.0f;
-	public float laneChangeSpeed = 10.0f;
+    [Header("Spline Ayarlarý")]
+    public SplineContainer trackSpline;
+    [HideInInspector] public float progress = 0f;
 
-	[Header("Zorluk (Hýzlanma) Ayarlarý")]
-	public float maxSpeed = 50.0f;
-	public float acceleration = 0.5f;
+    [Header("Hareket Ayarlarý")]
+    public float forwardSpeed = 20.0f;
+    public float maxSpeed = 100.0f;
+    public float acceleration = 0.5f;
 
-	[Header("Dönüþ Ayarlarý")]
-	public float turnAngle = 15.0f;
-	public float turnSpeed = 15.0f;
+    [Header("Þerit Ayarlarý")]
+    public float laneDistance = 3.0f;
+    public float laneChangeSmoothTime = 0.1f;
+    public float groundOffset = 0.2f;
 
-	private int currentLane = 1; // 0: left, 1: middle, 2: right
+    [Header("Görsel Dönüþ")]
+    public float turnAngle = 15.0f;
+    public float turnSpeed = 15.0f;
 
-	void Update()
-	{
-		// adding acceleration
-		if (forwardSpeed < maxSpeed)
-		{
-			forwardSpeed += acceleration * Time.deltaTime;
-		}
+    // --- KAMERANIN OKUDUÐU 2 DEÐÝÞKEN ---
+    [HideInInspector] public Vector3 currentTrackForward;
+    [HideInInspector] public float publicXOffset;
 
-		// controller(input)
-		if (Keyboard.current != null)
-		{
-			if (Keyboard.current.rightArrowKey.wasPressedThisFrame || Keyboard.current.dKey.wasPressedThisFrame)
-			{
-				currentLane++;
-				if (currentLane > 2) currentLane = 2;
-			}
+    private int currentLane = 1;
+    private float currentXOffset = 0f;
+    private float xOffsetVelocity = 0f;
+    private float cachedSplineLength;
 
-			if (Keyboard.current.leftArrowKey.wasPressedThisFrame || Keyboard.current.aKey.wasPressedThisFrame)
-			{
-				currentLane--;
-				if (currentLane < 0) currentLane = 0;
-			}
-		}
+    // Kaza durumunu takip eden deðiþken
+    private bool isDead = false;
 
-		// go forward
-		transform.Translate(Vector3.forward * forwardSpeed * Time.deltaTime, Space.World);
+    void Start()
+    {
+        Application.targetFrameRate = 60;
 
-		// left/right motion using larp function
-		float targetX = (currentLane - 1) * laneDistance;
-		float smoothX = Mathf.Lerp(transform.position.x, targetX, laneChangeSpeed * Time.deltaTime);
-		transform.position = new Vector3(smoothX, transform.position.y, transform.position.z);
+        if (trackSpline != null)
+        {
+            cachedSplineLength = trackSpline.CalculateLength();
+        }
+    }
 
-		// steering
-		float xDiff = targetX - transform.position.x;
-		float targetRotationY = xDiff * turnAngle;
-		Quaternion targetRotation = Quaternion.Euler(0, targetRotationY, 0);
-		transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, turnSpeed * Time.deltaTime);
-	}
+    void Update()
+    {
+        // Eðer öldüysek hiçbir hesaplama yapma, araç olduðu yerde kalsýn
+        if (isDead || trackSpline == null) return;
 
-	// crash control
-	private void OnTriggerEnter(Collider other)
-	{
-		if (other.CompareTag("Obstacle"))
-		{
-			if (GameManager.Instance != null)
-				GameManager.Instance.GameOver();
-		}
-		else if (other.CompareTag("Coin"))
-		{
-			if (GameManager.Instance != null)
-				GameManager.Instance.AddCoin();
+        HandleSpeed();
+        HandleInput();
+        CalculateMovement();
+    }
 
-			other.gameObject.SetActive(false);
-		}
-	}
+    void HandleSpeed()
+    {
+        if (forwardSpeed < maxSpeed) forwardSpeed += acceleration * Time.deltaTime;
+    }
+
+    void HandleInput()
+    {
+        if (Keyboard.current != null)
+        {
+            if (Keyboard.current.rightArrowKey.wasPressedThisFrame || Keyboard.current.dKey.wasPressedThisFrame)
+                currentLane = Mathf.Min(2, currentLane + 1);
+
+            if (Keyboard.current.leftArrowKey.wasPressedThisFrame || Keyboard.current.aKey.wasPressedThisFrame)
+                currentLane = Mathf.Max(0, currentLane - 1);
+        }
+    }
+
+    void CalculateMovement()
+    {
+        progress += (forwardSpeed * Time.deltaTime) / cachedSplineLength;
+        progress = Mathf.Repeat(progress, 1f);
+
+        float3 pos, forward, up;
+        trackSpline.Evaluate(progress, out pos, out forward, out up);
+
+        forward = math.normalize(forward);
+        up = math.normalize(up);
+        float3 right = math.cross(up, forward);
+
+        // Deðiþkenleri güncelle (Kameranýn çalýþmasý için)
+        currentTrackForward = (Vector3)forward;
+        publicXOffset = currentXOffset;
+
+        float targetXOffset = (currentLane - 1) * laneDistance;
+        currentXOffset = Mathf.SmoothDamp(currentXOffset, targetXOffset, ref xOffsetVelocity, laneChangeSmoothTime);
+
+        Vector3 finalPosition = (Vector3)pos + ((Vector3)right * currentXOffset);
+        finalPosition += (Vector3)up * groundOffset;
+
+        transform.position = finalPosition;
+
+        float xDiff = targetXOffset - currentXOffset;
+        float targetRotationY = xDiff * turnAngle;
+        Quaternion baseRotation = Quaternion.LookRotation(forward, up);
+        Quaternion turnRotation = Quaternion.Euler(0, targetRotationY, 0);
+        transform.rotation = Quaternion.Lerp(transform.rotation, baseRotation * turnRotation, turnSpeed * Time.deltaTime);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        // Daha önce ölmediysek ve bir engele çarptýysak
+        if (!isDead && other.CompareTag("Obstacle"))
+        {
+            isDead = true; // Hareketi kilitle
+            forwardSpeed = 0; // Hýzý sýfýrla
+
+            if (GameManager.Instance != null)
+                GameManager.Instance.GameOver();
+        }
+        else if (!isDead && other.CompareTag("Coin"))
+        {
+            if (GameManager.Instance != null)
+                GameManager.Instance.AddCoin();
+
+            other.gameObject.SetActive(false);
+        }
+    }
 }
-
