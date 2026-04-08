@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 5758484445638630503}
   - component: {fileID: 5566865385534750835}
   - component: {fileID: 5168741238982387313}
+  - component: {fileID: -2858483231062155157}
   m_Layer: 0
   m_Name: Coin
   m_TagString: Coin
@@ -114,3 +115,15 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
+--- !u!114 &-2858483231062155157
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3828344839509127815}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 406533aa1e5adb44f8ca6b37550020cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CoinBehavior

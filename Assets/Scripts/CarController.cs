@@ -5,25 +5,31 @@ using Unity.Mathematics;
 
 public class CarController : MonoBehaviour
 {
-    [Header("Spline Ayarları")]
+    [Header("Spline AyarlarÄ±")]
     public SplineContainer trackSpline;
     [HideInInspector] public float progress = 0f;
 
-    [Header("Hareket Ayarları")]
+    [Header("Hareket AyarlarÄ±")]
     public float forwardSpeed = 20.0f;
     public float maxSpeed = 100.0f;
     public float acceleration = 0.5f;
 
-    [Header("Şerit Ayarları")]
+    [Header("Åerit AyarlarÄ±")]
     public float laneDistance = 3.0f;
     public float laneChangeSmoothTime = 0.1f;
     public float groundOffset = 0.2f;
 
-    [Header("Görsel Dönüş")]
+    [Header("GÃ¶rsel DÃ¶nÃ¼ÅŸ")]
     public float turnAngle = 15.0f;
     public float turnSpeed = 15.0f;
 
-    // --- KAMERANIN OKUDUĞU 2 DEĞİŞKEN ---
+    [Header("GÃ¼Ã§lendiriciler")]
+    [HideInInspector] public bool isMagnetActive = false; 
+    public float magnetDuration = 10f;  
+    public float magnetRadius = 25f;    
+    public float magnetPullSpeed = 50f; 
+
+    // --- KAMERANIN OKUDUÄU 2 DEÄÄ°ÅKEN ---
     [HideInInspector] public Vector3 currentTrackForward;
     [HideInInspector] public float publicXOffset;
 
@@ -32,7 +38,7 @@ public class CarController : MonoBehaviour
     private float xOffsetVelocity = 0f;
     private float cachedSplineLength;
 
-    // Kaza durumunu takip eden değişken
+    // Kaza durumunu takip eden deÄŸiÅŸken
     private bool isDead = false;
 
     void Start()
@@ -47,7 +53,7 @@ public class CarController : MonoBehaviour
 
     void Update()
     {
-        // Eğer öldüysek hiçbir hesaplama yapma, araç olduğu yerde kalsın
+        // EÄŸer Ã¶ldÃ¼ysek hiÃ§bir hesaplama yapma, araÃ§ olduÄŸu yerde kalsÄ±n
         if (isDead || trackSpline == null) return;
 
         HandleSpeed();
@@ -84,7 +90,7 @@ public class CarController : MonoBehaviour
         up = math.normalize(up);
         float3 right = math.cross(up, forward);
 
-        // Değişkenleri güncelle (Kameranın çalışması için)
+        // DeÄŸiÅŸkenleri gÃ¼ncelle (KameranÄ±n Ã§alÄ±ÅŸmasÄ± iÃ§in)
         currentTrackForward = (Vector3)forward;
         publicXOffset = currentXOffset;
 
@@ -105,11 +111,11 @@ public class CarController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // Daha önce ölmediysek ve bir engele çarptıysak
+        // Daha Ã¶nce Ã¶lmediysek ve bir engele Ã§arptÄ±ysak
         if (!isDead && other.CompareTag("Obstacle"))
         {
             isDead = true; // Hareketi kilitle
-            forwardSpeed = 0; // Hızı sıfırla
+            forwardSpeed = 0; // HÄ±zÄ± sÄ±fÄ±rla
 
             if (GameManager.Instance != null)
                 GameManager.Instance.GameOver();
@@ -121,5 +127,19 @@ public class CarController : MonoBehaviour
 
             other.gameObject.SetActive(false);
         }
+        // YENÄ°: MÄ±knatÄ±s Toplama
+        else if (!isDead && other.CompareTag("Magnet"))
+        {
+            StartCoroutine(MagnetRoutine()); // MÄ±knatÄ±s sÃ¼resini baÅŸlat
+            other.gameObject.SetActive(false); // MÄ±knatÄ±sÄ± gizle
+        }
+    }
+
+    // YENÄ°: MÄ±knatÄ±s SÃ¼resi
+    private System.Collections.IEnumerator MagnetRoutine()
+    {
+        isMagnetActive = true; 
+        yield return new WaitForSeconds(magnetDuration); 
+        isMagnetActive = false; 
     }
 }

@@ -1109,6 +1109,10 @@ MonoBehaviour:
   coinPoolSize: 10
   coinRotationOffset: {x: 90, y: 0, z: 0}
   coinSpawnChance: 60
+  magnetPrefab: {fileID: 8050537342152234946, guid: 50e260f821baa56419af96b848301e5d, type: 3}
+  magnetPoolSize: 10
+  magnetRotationOffset: {x: 0, y: 0, z: 0}
+  magnetSpawnChance: 10
   playerCar: {fileID: 1657530734}
   spawnDistanceAhead: 60
   laneDistance: 3.3
@@ -1753,6 +1757,10 @@ MonoBehaviour:
   groundOffset: 0.2
   turnAngle: 15
   turnSpeed: 15
+  isMagnetActive: 0
+  magnetDuration: 20
+  magnetRadius: 40
+  magnetPullSpeed: 150
   currentTrackForward: {x: 0, y: 0, z: 0}
   publicXOffset: 0
 --- !u!54 &1657530737

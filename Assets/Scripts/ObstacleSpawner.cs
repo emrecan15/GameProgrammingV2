@@ -1,18 +1,17 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Splines; // Spline paketi þart
-using Unity.Mathematics;   // Matematik kütüphanesi þart
+using UnityEngine.Splines; 
+using Unity.Mathematics;   
 
 public class ObstacleSpawner : MonoBehaviour
 {
-    [Header("Havuz Ayarlarý (Engeller)")]
+    [Header("Havuz AyarlarÄ± (Engeller)")]
     public GameObject[] obstaclePrefabs;
     public int poolSizePerPrefab = 5;
-    // Eðer modeller yan duruyorsa buradan (0, 90, 0) gibi düzeltebilirsin
     public Vector3 obstacleRotationOffset = new Vector3(0, 0, 0);
     private List<List<GameObject>> poolList;
 
-    [Header("Havuz Ayarlarý (Altýn)")]
+    [Header("Havuz AyarlarÄ± (AltÄ±n)")]
     public GameObject coinPrefab;
     public int coinPoolSize = 10;
     public Vector3 coinRotationOffset = new Vector3(0, 0, 0);
@@ -20,17 +19,25 @@ public class ObstacleSpawner : MonoBehaviour
     [Range(0f, 100f)]
     public float coinSpawnChance = 60f;
 
-    [Header("Doðma Ayarlarý (Spline)")]
+    [Header("Havuz AyarlarÄ± (MÄ±knatÄ±s)")]
+    public GameObject magnetPrefab;
+    public int magnetPoolSize = 3;
+    public Vector3 magnetRotationOffset = new Vector3(0, 0, 0);
+    private List<GameObject> magnetPool;
+    [Range(0f, 100f)] 
+    public float magnetSpawnChance = 5f; // %5 ihtimalle mÄ±knatÄ±s Ã§Ä±ksÄ±n
+
+    [Header("DoÄŸma AyarlarÄ± (Spline)")]
     public CarController playerCar;
-    public float spawnDistanceAhead = 60f; // Arabadan ne kadar önde doðsun?
+    public float spawnDistanceAhead = 60f; 
     public float laneDistance = 3.5f;
 
-    [Header("Zorluk Ayarlarý")]
+    [Header("Zorluk AyarlarÄ±")]
     public float spawnDistanceInterval = 25f;
 
     private float lastSpawnProgressDist;
     private SplineContainer spline;
-    private float cachedSplineLength; // Performans için uzunluðu saklayacaðýz
+    private float cachedSplineLength; 
 
     void Start()
     {
@@ -39,12 +46,11 @@ public class ObstacleSpawner : MonoBehaviour
             spline = playerCar.trackSpline;
             if (spline != null)
             {
-                // Uzunluðu bir kez hesaplayýp kaydediyoruz (Update içinde çaðýrmýyoruz)
                 cachedSplineLength = spline.CalculateLength();
             }
         }
 
-        // Engel havuzunu oluþtur
+        // Engel havuzunu oluÅŸtur
         poolList = new List<List<GameObject>>();
         for (int i = 0; i < obstaclePrefabs.Length; i++)
         {
@@ -58,13 +64,22 @@ public class ObstacleSpawner : MonoBehaviour
             poolList.Add(objectPool);
         }
 
-        // Altýn havuzunu oluþtur
+        // AltÄ±n havuzunu oluÅŸtur
         coinPool = new List<GameObject>();
         for (int i = 0; i < coinPoolSize; i++)
         {
             GameObject coin = Instantiate(coinPrefab);
             coin.SetActive(false);
             coinPool.Add(coin);
+        }
+
+        // MÄ±knatÄ±s havuzunu oluÅŸtur
+        magnetPool = new List<GameObject>();
+        for (int i = 0; i < magnetPoolSize; i++)
+        {
+            GameObject magnet = Instantiate(magnetPrefab);
+            magnet.SetActive(false);
+            magnetPool.Add(magnet);
         }
 
         if (playerCar != null && spline != null)
@@ -77,7 +92,6 @@ public class ObstacleSpawner : MonoBehaviour
     {
         if (spline == null || playerCar == null) return;
 
-        // Arabanýn spline üzerindeki toplam kat ettiði mesafe (Cache üzerinden hesap)
         float currentDist = playerCar.progress * cachedSplineLength;
 
         if (currentDist - lastSpawnProgressDist >= spawnDistanceInterval)
@@ -89,20 +103,16 @@ public class ObstacleSpawner : MonoBehaviour
 
     void SpawnObstacleAndCoin()
     {
-        // Doðma noktasýný hesapla
         float targetSpawnDist = (playerCar.progress * cachedSplineLength) + spawnDistanceAhead;
         float spawnProgress = (targetSpawnDist % cachedSplineLength) / cachedSplineLength;
 
-        // Spline verilerini al
         float3 pos, forward, up;
         spline.Evaluate(spawnProgress, out pos, out forward, out up);
 
-        // Normalize et
         forward = math.normalize(forward);
         up = math.normalize(up);
         float3 right = math.cross(up, forward);
 
-        // Temel yol rotasyonu
         Quaternion baseRotation = Quaternion.LookRotation(forward, up);
 
         // --- ENGEL SPAWN ---
@@ -119,7 +129,6 @@ public class ObstacleSpawner : MonoBehaviour
             finalPos.y += originalY;
 
             obstacle.transform.position = finalPos;
-            // Yol rotasyonu + Senin verdiðin ofset
             obstacle.transform.rotation = baseRotation * Quaternion.Euler(obstacleRotationOffset);
             obstacle.SetActive(true);
         }
@@ -140,9 +149,27 @@ public class ObstacleSpawner : MonoBehaviour
                 coinFinalPos.y += coinY;
 
                 coin.transform.position = coinFinalPos;
-                // Altýn rotasyonu + Senin verdiðin ofset
                 coin.transform.rotation = baseRotation * Quaternion.Euler(coinRotationOffset);
                 coin.SetActive(true);
+            }
+        }
+
+        // --- MIKNATIS SPAWN ---
+        if (UnityEngine.Random.Range(0f, 100f) <= magnetSpawnChance)
+        {
+            GameObject magnetObj = GetPooledMagnet();
+            if (magnetObj != null)
+            {
+                int magnetLane = UnityEngine.Random.Range(0, 3);
+                float magnetXPos = (magnetLane - 1) * laneDistance;
+                float magnetY = magnetPrefab.transform.position.y;
+
+                Vector3 magnetFinalPos = (Vector3)pos + ((Vector3)right * magnetXPos);
+                magnetFinalPos.y += magnetY;
+
+                magnetObj.transform.position = magnetFinalPos;
+                magnetObj.transform.rotation = baseRotation * Quaternion.Euler(magnetRotationOffset);
+                magnetObj.SetActive(true);
             }
         }
     }
@@ -169,5 +196,17 @@ public class ObstacleSpawner : MonoBehaviour
         newCoin.SetActive(false);
         coinPool.Add(newCoin);
         return newCoin;
+    }
+
+    GameObject GetPooledMagnet()
+    {
+        for (int i = 0; i < magnetPool.Count; i++)
+        {
+            if (!magnetPool[i].activeInHierarchy) return magnetPool[i];
+        }
+        GameObject newMagnet = Instantiate(magnetPrefab);
+        newMagnet.SetActive(false);
+        magnetPool.Add(newMagnet);
+        return newMagnet;
     }
 }
