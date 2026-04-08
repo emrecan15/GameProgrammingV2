@@ -299,6 +299,15 @@ MonoBehaviour:
   - {fileID: 4775358128559842662, guid: 5c358407e7dc1e442b70c0ea08a6d91d, type: 3}
   roadLength: 30
   amountOfRoadsOnScreen: 7
+  tunnelStartPrefab: {fileID: 4775358128559842662, guid: ed25645ed113e1b4ea1f521ed101b152, type: 3}
+  tunnelMiddlePrefab: {fileID: 4775358128559842662, guid: e3b79ca9cba2bb140bc37ed91b0c2465, type: 3}
+  tunnelEndPrefab: {fileID: 4775358128559842662, guid: 3bfff395ef32d944ebf3033baa6fc6cf, type: 3}
+  bridgePrefabs:
+  - {fileID: 4775358128559842662, guid: 793d365b1f6a6d9459d7c9b4d4fc4163, type: 3}
+  - {fileID: 4775358128559842662, guid: e2c3b24822eb1d5428fb48affebc923c, type: 3}
+  tunnelChance: 0.05
+  bridgeChance: 0.05
+  minNormalRoadsBetweenSpecials: 15
 --- !u!4 &184228856
 Transform:
   m_ObjectHideFlags: 0
