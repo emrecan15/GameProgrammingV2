@@ -1,80 +1,126 @@
 using UnityEngine;
-using TMPro; // textmash lib
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-	public static GameManager Instance;
+    public static GameManager Instance;
 
-	[Header("Referanslar")]
-	public Transform playerTransform;
-	public TextMeshProUGUI scoreText; 
-	public TextMeshProUGUI coinText;  
+    [Header("Referanslar (Otomatik Atanýr)")]
+    // playerCar artýk Inspector'dan sürüklenmeyecek, kod otomatik atayacak.
+    [HideInInspector] public CarController playerCar;
+    public UIManager uiManager;
+    public CameraFollow mainCamera;
+    public ObstacleSpawner obstacleSpawner;
 
-	[Header("Skor Bilgileri")]
-	public float currentScore;
-	public int totalCoins;
+    [Header("Garaj (Market) Ayarlarý")]
+    public GameObject[] carPrefabs; // Marketten alýnan arabalarýn PREFAB listesi
+    public Transform carSpawnPoint; // Arabanýn doðacaðý baþlangýç noktasý (Boþ Obje)
 
-	private bool isGameActive = true;
-	private float startZPos;
+    [Header("Oyun Ýçi UI (HUD)")]
+    public TextMeshProUGUI scoreText;
+    public TextMeshProUGUI coinText;
 
-	private void Awake()
-	{
-		if (Instance == null) Instance = this;
-		else Destroy(gameObject);
-	}
+    [Header("Skor Bilgileri")]
+    public float currentScore;
+    public int totalCoins;
 
-	void Start()
-	{
-		Time.timeScale = 1f;
+    [Header("Subway Surfers Ayarlarý")]
+    public float scoreMultiplier = 5f;
 
-		if (playerTransform != null)
-		{
-			startZPos = playerTransform.position.z;
-		}
+    private bool isGameActive = true;
 
-		// default coin text = 0 when the game starts
-		UpdateCoinUI();
-	}
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
 
-	void Update()
-	{
-		if (isGameActive && playerTransform != null)
-		{
-			
-			float distanceScore = playerTransform.position.z - startZPos;
+        // YENÝ: Oyun baþlarken marketten seçilen arabayý yarat
+        SpawnSelectedCar();
+    }
 
-			
-			currentScore = distanceScore + (totalCoins * 10);
+    void Start()
+    {
+        Time.timeScale = 1f;
+        UpdateCoinUI();
 
-			
-			if (scoreText != null)
-			{
-				scoreText.text = "Score: " + Mathf.FloorToInt(currentScore).ToString();
-			}
-		}
-	}
+        if (uiManager == null)
+            uiManager = FindAnyObjectByType<UIManager>();
+    }
 
-	public void AddCoin()
-	{
-		totalCoins++;
+    private void SpawnSelectedCar()
+    {
+        // Eðer prefab listesi doluysa ve doðma noktasý (SpawnPoint) belirlendiyse
+        if (carPrefabs != null && carPrefabs.Length > 0 && carSpawnPoint != null)
+        {
+            // Cihazýn hafýzasýndan seçili arabanýn indexini (sýrasýný) al (Örn: 0, 1 veya 2)
+            int selectedCarIndex = PlayerPrefs.GetInt("SelectedCarIndex", 0);
 
-		
-		UpdateCoinUI();
-	}
+            // Güvenlik: Eðer kayýtlý index, bizim araba listemizden büyükse çökmemesi için 0. arabayý seç
+            if (selectedCarIndex >= carPrefabs.Length) selectedCarIndex = 0;
 
-	
-	private void UpdateCoinUI()
-	{
-		if (coinText != null)
-		{
-			coinText.text = "Coins: " + totalCoins.ToString();
-		}
-	}
+            // Arabayý SpawnPoint noktasýnda doður (Instantiate)
+            GameObject spawnedCar = Instantiate(carPrefabs[selectedCarIndex], carSpawnPoint.position, carSpawnPoint.rotation);
+            playerCar = spawnedCar.GetComponent<CarController>();
 
-	public void GameOver()
-	{
-		isGameActive = false;
-		Debug.Log("ENGELE ÇARPTIN! Final Skor: " + Mathf.FloorToInt(currentScore));
-		Time.timeScale = 0f;
-	}
+            // Doðurulan bu yeni arabayý sisteme tanýt:
+            // 1. Kamerayý yeni doðan arabaya kilitle
+            if (mainCamera != null) mainCamera.target = spawnedCar.transform;
+
+            // 2. Engel üreticiye yeni doðan arabayý bildir (Engeller/Altýnlar arabanýn önüne çýksýn)
+            if (obstacleSpawner != null) obstacleSpawner.playerCar = playerCar;
+        }
+        else
+        {
+            Debug.LogWarning("GameManager'da CarPrefabs veya CarSpawnPoint eksik!");
+        }
+    }
+
+    void Update()
+    {
+        if (isGameActive && playerCar != null)
+        {
+            currentScore += (playerCar.forwardSpeed * scoreMultiplier) * Time.deltaTime;
+
+            if (scoreText != null)
+            {
+                scoreText.text = "SCORE\n" + Mathf.FloorToInt(currentScore).ToString();
+            }
+        }
+    }
+
+    public void AddCoin()
+    {
+        totalCoins++;
+        UpdateCoinUI();
+    }
+
+    private void UpdateCoinUI()
+    {
+        if (coinText != null)
+        {
+            coinText.text = "COINS\n" + totalCoins.ToString();
+        }
+    }
+
+    public void GameOver()
+    {
+        if (!isGameActive) return;
+
+        isGameActive = false;
+        Debug.Log("ENGELE ÇARPTIN! Final Skor: " + Mathf.FloorToInt(currentScore));
+
+        // Oyun bittiðinde toplanan altýnlarý cihaza kaydet (Market için)
+        int savedCoins = PlayerPrefs.GetInt("TotalCoins", 0);
+        PlayerPrefs.SetInt("TotalCoins", savedCoins + totalCoins);
+        PlayerPrefs.Save();
+
+        if (uiManager != null)
+        {
+            uiManager.ShowGameOver(Mathf.FloorToInt(currentScore), totalCoins);
+        }
+        else
+        {
+            Time.timeScale = 0f;
+        }
+    }
 }
