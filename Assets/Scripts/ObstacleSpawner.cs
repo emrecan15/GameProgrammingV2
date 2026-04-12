@@ -25,7 +25,7 @@ public class ObstacleSpawner : MonoBehaviour
     public Vector3 magnetRotationOffset = new Vector3(0, 0, 0);
     private List<GameObject> magnetPool;
     [Range(0f, 100f)] 
-    public float magnetSpawnChance = 5f; // %5 ihtimalle mıknatıs çıksın
+    public float magnetSpawnChance = 5f;
 
     [Header("Doğma Ayarları (Spline)")]
     public CarController playerCar;
@@ -34,6 +34,10 @@ public class ObstacleSpawner : MonoBehaviour
 
     [Header("Zorluk Ayarları")]
     public float spawnDistanceInterval = 25f;
+    
+    // --- YENİ EKLENEN COOLDOWN AYARLARI ---
+    public int minSpawnsBetweenMagnets = 8; // İki mıknatıs arasında en az kaç kere engel doğmalı?
+    private int currentMagnetCooldown = 0;
 
     private float lastSpawnProgressDist;
     private SplineContainer spline;
@@ -115,10 +119,10 @@ public class ObstacleSpawner : MonoBehaviour
 
         Quaternion baseRotation = Quaternion.LookRotation(forward, up);
 
-        // --- ENGEL SPAWN ---
+        // --- 1. ENGEL SPAWN ---
         int randomObstacleIndex = UnityEngine.Random.Range(0, obstaclePrefabs.Length);
         GameObject obstacle = GetPooledObstacle(randomObstacleIndex);
-        int obstacleLane = UnityEngine.Random.Range(0, 3);
+        int obstacleLane = UnityEngine.Random.Range(0, 3); 
 
         if (obstacle != null)
         {
@@ -133,14 +137,17 @@ public class ObstacleSpawner : MonoBehaviour
             obstacle.SetActive(true);
         }
 
-        // --- ALTIN SPAWN ---
+        // --- 2. ALTIN SPAWN ---
+        int coinLane = -1; 
+        bool isCoinSpawned = false; 
+
         if (UnityEngine.Random.Range(0f, 100f) <= coinSpawnChance)
         {
             GameObject coin = GetPooledCoin();
             if (coin != null)
             {
-                int coinLane;
                 do { coinLane = UnityEngine.Random.Range(0, 3); } while (coinLane == obstacleLane);
+                isCoinSpawned = true;
 
                 float coinXPos = (coinLane - 1) * laneDistance;
                 float coinY = coinPrefab.transform.position.y;
@@ -154,13 +161,22 @@ public class ObstacleSpawner : MonoBehaviour
             }
         }
 
-        // --- MIKNATIS SPAWN ---
-        if (UnityEngine.Random.Range(0f, 100f) <= magnetSpawnChance)
+        // --- 3. MIKNATIS SPAWN (COOLDOWN EKLENDİ) ---
+        if (currentMagnetCooldown > 0) currentMagnetCooldown--;
+
+        // Eğer mıknatıs şu an aktif değilse VE bekleme süresi bittiyse zarı at!
+        if (currentMagnetCooldown <= 0 && !playerCar.isMagnetActive && UnityEngine.Random.Range(0f, 100f) <= magnetSpawnChance)
         {
             GameObject magnetObj = GetPooledMagnet();
             if (magnetObj != null)
             {
-                int magnetLane = UnityEngine.Random.Range(0, 3);
+                int magnetLane;
+                do 
+                { 
+                    magnetLane = UnityEngine.Random.Range(0, 3); 
+                } 
+                while (magnetLane == obstacleLane || (isCoinSpawned && magnetLane == coinLane));
+
                 float magnetXPos = (magnetLane - 1) * laneDistance;
                 float magnetY = magnetPrefab.transform.position.y;
 
@@ -170,6 +186,9 @@ public class ObstacleSpawner : MonoBehaviour
                 magnetObj.transform.position = magnetFinalPos;
                 magnetObj.transform.rotation = baseRotation * Quaternion.Euler(magnetRotationOffset);
                 magnetObj.SetActive(true);
+                
+                // Mıknatısı koyduk, sayacı tekrar başlat ki arka arkaya çıkmasın
+                currentMagnetCooldown = minSpawnsBetweenMagnets; 
             }
         }
     }
