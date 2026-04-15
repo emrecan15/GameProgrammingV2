@@ -6139,7 +6139,7 @@ MonoBehaviour:
     price: 100
     carIcon: {fileID: 21300000, guid: 78e871bbea9fafc47ba8229f0b764d7b, type: 3}
   - carName: Sport Car(Orange)
-    price: 3000
+    price: 1
     carIcon: {fileID: 21300000, guid: c0038e7e15acd1640a4ff61ee5cae56c, type: 3}
   carCards:
   - cardRoot: {fileID: 1810278715}
