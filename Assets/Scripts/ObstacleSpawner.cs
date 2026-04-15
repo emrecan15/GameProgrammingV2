@@ -16,16 +16,21 @@ public class ObstacleSpawner : MonoBehaviour
     public int coinPoolSize = 10;
     public Vector3 coinRotationOffset = new Vector3(0, 0, 0);
     private List<GameObject> coinPool;
-    [Range(0f, 100f)]
-    public float coinSpawnChance = 60f;
+    [Range(0f, 100f)] public float coinSpawnChance = 60f;
 
     [Header("Havuz Ayarları (Mıknatıs)")]
     public GameObject magnetPrefab;
     public int magnetPoolSize = 3;
     public Vector3 magnetRotationOffset = new Vector3(0, 0, 0);
     private List<GameObject> magnetPool;
-    [Range(0f, 100f)] 
-    public float magnetSpawnChance = 5f;
+    [Range(0f, 100f)] public float magnetSpawnChance = 5f;
+
+    [Header("Havuz Ayarları (Nitro)")]
+    public GameObject nitroPrefab;
+    public int nitroPoolSize = 3;
+    public Vector3 nitroRotationOffset = new Vector3(0, 0, 0);
+    private List<GameObject> nitroPool;
+    [Range(0f, 100f)] public float nitroSpawnChance = 5f;
 
     [Header("Doğma Ayarları (Spline)")]
     public CarController playerCar;
@@ -34,10 +39,8 @@ public class ObstacleSpawner : MonoBehaviour
 
     [Header("Zorluk Ayarları")]
     public float spawnDistanceInterval = 25f;
-    
-    // --- YENİ EKLENEN COOLDOWN AYARLARI ---
-    public int minSpawnsBetweenMagnets = 8; // İki mıknatıs arasında en az kaç kere engel doğmalı?
-    private int currentMagnetCooldown = 0;
+    public int minSpawnsBetweenPowerUps = 10; 
+    private int currentPowerUpCooldown = 0;
 
     private float lastSpawnProgressDist;
     private SplineContainer spline;
@@ -45,51 +48,48 @@ public class ObstacleSpawner : MonoBehaviour
 
     void Start()
     {
-        if (playerCar != null)
+        if (playerCar == null)
+        {
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null) playerCar = playerObj.GetComponent<CarController>();
+        }
+
+        if (playerCar != null && playerCar.trackSpline != null)
         {
             spline = playerCar.trackSpline;
-            if (spline != null)
-            {
-                cachedSplineLength = spline.CalculateLength();
-            }
-        }
-
-        // Engel havuzunu oluştur
-        poolList = new List<List<GameObject>>();
-        for (int i = 0; i < obstaclePrefabs.Length; i++)
-        {
-            List<GameObject> objectPool = new List<GameObject>();
-            for (int j = 0; j < poolSizePerPrefab; j++)
-            {
-                GameObject obj = Instantiate(obstaclePrefabs[i]);
-                obj.SetActive(false);
-                objectPool.Add(obj);
-            }
-            poolList.Add(objectPool);
-        }
-
-        // Altın havuzunu oluştur
-        coinPool = new List<GameObject>();
-        for (int i = 0; i < coinPoolSize; i++)
-        {
-            GameObject coin = Instantiate(coinPrefab);
-            coin.SetActive(false);
-            coinPool.Add(coin);
-        }
-
-        // Mıknatıs havuzunu oluştur
-        magnetPool = new List<GameObject>();
-        for (int i = 0; i < magnetPoolSize; i++)
-        {
-            GameObject magnet = Instantiate(magnetPrefab);
-            magnet.SetActive(false);
-            magnetPool.Add(magnet);
-        }
-
-        if (playerCar != null && spline != null)
-        {
+            cachedSplineLength = spline.CalculateLength();
             lastSpawnProgressDist = playerCar.progress * cachedSplineLength;
         }
+
+        poolList = new List<List<GameObject>>();
+        if (obstaclePrefabs != null && obstaclePrefabs.Length > 0)
+        {
+            for (int i = 0; i < obstaclePrefabs.Length; i++)
+            {
+                if (obstaclePrefabs[i] != null)
+                {
+                    poolList.Add(CreatePool(obstaclePrefabs[i], poolSizePerPrefab));
+                }
+            }
+        }
+
+        coinPool = CreatePool(coinPrefab, coinPoolSize);
+        magnetPool = CreatePool(magnetPrefab, magnetPoolSize);
+        nitroPool = CreatePool(nitroPrefab, nitroPoolSize); 
+    }
+
+    List<GameObject> CreatePool(GameObject prefab, int size)
+    {
+        List<GameObject> pool = new List<GameObject>();
+        if (prefab == null) return pool;
+
+        for (int i = 0; i < size; i++)
+        {
+            GameObject obj = Instantiate(prefab);
+            obj.SetActive(false);
+            pool.Add(obj);
+        }
+        return pool;
     }
 
     void Update()
@@ -100,12 +100,12 @@ public class ObstacleSpawner : MonoBehaviour
 
         if (currentDist - lastSpawnProgressDist >= spawnDistanceInterval)
         {
-            SpawnObstacleAndCoin();
+            SpawnObstacleAndItems();
             lastSpawnProgressDist = currentDist;
         }
     }
 
-    void SpawnObstacleAndCoin()
+    void SpawnObstacleAndItems()
     {
         float targetSpawnDist = (playerCar.progress * cachedSplineLength) + spawnDistanceAhead;
         float spawnProgress = (targetSpawnDist % cachedSplineLength) / cachedSplineLength;
@@ -118,114 +118,124 @@ public class ObstacleSpawner : MonoBehaviour
         float3 right = math.cross(up, forward);
 
         Quaternion baseRotation = Quaternion.LookRotation(forward, up);
+        List<int> availableLanes = new List<int> { 0, 1, 2 };
 
-        // --- 1. ENGEL SPAWN ---
-        int randomObstacleIndex = UnityEngine.Random.Range(0, obstaclePrefabs.Length);
-        GameObject obstacle = GetPooledObstacle(randomObstacleIndex);
-        int obstacleLane = UnityEngine.Random.Range(0, 3); 
+        // YENİ: Sadece Nitro yoksa VEYA nitro bitmek üzereyse Engel çıkart!
+        bool shouldSpawnObstacle = !playerCar.isNitroActive || playerCar.isNitroEnding;
 
-        if (obstacle != null)
+        if (poolList.Count > 0 && shouldSpawnObstacle)
         {
-            float xPos = (obstacleLane - 1) * laneDistance;
-            float originalY = obstaclePrefabs[randomObstacleIndex].transform.position.y;
+            int obstacleLane = UnityEngine.Random.Range(0, 3);
+            availableLanes.Remove(obstacleLane); 
+            int randomObstacleIndex = UnityEngine.Random.Range(0, poolList.Count);
+            
+            // Engeli Yola Koy
+            GameObject spawnedObstacle = SpawnFromPool(poolList[randomObstacleIndex], obstacleLane, baseRotation, obstacleRotationOffset, pos, right);
 
-            Vector3 finalPos = (Vector3)pos + ((Vector3)right * xPos);
-            finalPos.y += originalY;
-
-            obstacle.transform.position = finalPos;
-            obstacle.transform.rotation = baseRotation * Quaternion.Euler(obstacleRotationOffset);
-            obstacle.SetActive(true);
-        }
-
-        // --- 2. ALTIN SPAWN ---
-        int coinLane = -1; 
-        bool isCoinSpawned = false; 
-
-        if (UnityEngine.Random.Range(0f, 100f) <= coinSpawnChance)
-        {
-            GameObject coin = GetPooledCoin();
-            if (coin != null)
+            // YENİ: Eğer engel nitro biterken çıktıysa ona yanıp sönme uyarısı ekle
+            if (playerCar.isNitroEnding && spawnedObstacle != null)
             {
-                do { coinLane = UnityEngine.Random.Range(0, 3); } while (coinLane == obstacleLane);
-                isCoinSpawned = true;
-
-                float coinXPos = (coinLane - 1) * laneDistance;
-                float coinY = coinPrefab.transform.position.y;
-
-                Vector3 coinFinalPos = (Vector3)pos + ((Vector3)right * coinXPos);
-                coinFinalPos.y += coinY;
-
-                coin.transform.position = coinFinalPos;
-                coin.transform.rotation = baseRotation * Quaternion.Euler(coinRotationOffset);
-                coin.SetActive(true);
+                BlinkEffect blinker = spawnedObstacle.GetComponent<BlinkEffect>();
+                if (blinker == null) blinker = spawnedObstacle.AddComponent<BlinkEffect>(); // Yoksa kodu objeye tak
+                blinker.StartBlinking(2.0f); // 2 saniye boyunca yanıp sönsün
             }
         }
 
-        // --- 3. MIKNATIS SPAWN (COOLDOWN EKLENDİ) ---
-        if (currentMagnetCooldown > 0) currentMagnetCooldown--;
-
-        // Eğer mıknatıs şu an aktif değilse VE bekleme süresi bittiyse zarı at!
-        if (currentMagnetCooldown <= 0 && !playerCar.isMagnetActive && UnityEngine.Random.Range(0f, 100f) <= magnetSpawnChance)
+        // Altın çıkmaya devam eder (Bomboş yolda altın toplamak keyiflidir)
+        if (coinPool.Count > 0 && UnityEngine.Random.Range(0f, 100f) <= coinSpawnChance && availableLanes.Count > 0)
         {
-            GameObject magnetObj = GetPooledMagnet();
-            if (magnetObj != null)
+            int randomIndex = UnityEngine.Random.Range(0, availableLanes.Count);
+            int coinLane = availableLanes[randomIndex];
+            availableLanes.Remove(coinLane); 
+            SpawnFromPool(coinPool, coinLane, baseRotation, coinRotationOffset, pos, right);
+        }
+
+        if (currentPowerUpCooldown > 0) currentPowerUpCooldown--;
+
+        if (availableLanes.Count > 0 && currentPowerUpCooldown <= 0)
+        {
+            float powerUpRoll = UnityEngine.Random.Range(0f, 100f);
+            
+            if (magnetPool.Count > 0 && !playerCar.isMagnetActive && powerUpRoll <= magnetSpawnChance)
             {
-                int magnetLane;
-                do 
-                { 
-                    magnetLane = UnityEngine.Random.Range(0, 3); 
-                } 
-                while (magnetLane == obstacleLane || (isCoinSpawned && magnetLane == coinLane));
-
-                float magnetXPos = (magnetLane - 1) * laneDistance;
-                float magnetY = magnetPrefab.transform.position.y;
-
-                Vector3 magnetFinalPos = (Vector3)pos + ((Vector3)right * magnetXPos);
-                magnetFinalPos.y += magnetY;
-
-                magnetObj.transform.position = magnetFinalPos;
-                magnetObj.transform.rotation = baseRotation * Quaternion.Euler(magnetRotationOffset);
-                magnetObj.SetActive(true);
-                
-                // Mıknatısı koyduk, sayacı tekrar başlat ki arka arkaya çıkmasın
-                currentMagnetCooldown = minSpawnsBetweenMagnets; 
+                SpawnFromPool(magnetPool, availableLanes[0], baseRotation, magnetRotationOffset, pos, right);
+                currentPowerUpCooldown = minSpawnsBetweenPowerUps;
+            }
+            else if (nitroPool.Count > 0 && !playerCar.isNitroActive && powerUpRoll <= (magnetSpawnChance + nitroSpawnChance))
+            {
+                SpawnFromPool(nitroPool, availableLanes[0], baseRotation, nitroRotationOffset, pos, right);
+                currentPowerUpCooldown = minSpawnsBetweenPowerUps;
             }
         }
     }
 
-    GameObject GetPooledObstacle(int index)
+    // YENİ: İşlemler için çıkartılan Objeyi geriye döndürüyoruz (GameObject türünde)
+    GameObject SpawnFromPool(List<GameObject> pool, int lane, Quaternion baseRot, Vector3 rotOffset, float3 pos, float3 right)
     {
-        for (int i = 0; i < poolList[index].Count; i++)
+        if (pool == null || pool.Count == 0) return null;
+
+        foreach (GameObject obj in pool)
         {
-            if (!poolList[index][i].activeInHierarchy) return poolList[index][i];
+            if (!obj.activeInHierarchy)
+            {
+                float xPos = (lane - 1) * laneDistance;
+                float originalY = obj.transform.position.y;
+
+                Vector3 finalPos = (Vector3)pos + ((Vector3)right * xPos);
+                finalPos.y += originalY; 
+
+                obj.transform.position = finalPos;
+                obj.transform.rotation = baseRot * Quaternion.Euler(rotOffset);
+                obj.SetActive(true);
+                return obj; // Çıkan objeyi yolla ki efekt takabilelim
+            }
         }
-        GameObject newObj = Instantiate(obstaclePrefabs[index]);
-        newObj.SetActive(false);
-        poolList[index].Add(newObj);
-        return newObj;
+        return null;
+    }
+}
+
+// --- YANIP SÖNME EFEKTİ KODU (Başka dosya açmana gerek yok, burada durması yeterli) ---
+public class BlinkEffect : MonoBehaviour
+{
+    private float blinkDuration;
+    private float timer;
+    private MeshRenderer[] renderers;
+
+    public void StartBlinking(float duration)
+    {
+        blinkDuration = duration;
+        timer = 0;
+        // Engelin üzerindeki tüm görsel ağları (Mesh) bul
+        renderers = GetComponentsInChildren<MeshRenderer>();
     }
 
-    GameObject GetPooledCoin()
+    void Update()
     {
-        for (int i = 0; i < coinPool.Count; i++)
+        if (timer < blinkDuration)
         {
-            if (!coinPool[i].activeInHierarchy) return coinPool[i];
+            timer += Time.deltaTime;
+            // Mathf.PingPong ile 0.1 saniyede bir görünür/görünmez yap
+            bool isVisible = Mathf.PingPong(Time.time * 15f, 1f) > 0.5f;
+
+            foreach(MeshRenderer mr in renderers)
+            {
+                mr.enabled = isVisible;
+            }
+
+            // Süre bittiğinde objeyi tamamen görünür hale kilitle
+            if (timer >= blinkDuration)
+            {
+                foreach(MeshRenderer mr in renderers) mr.enabled = true;
+            }
         }
-        GameObject newCoin = Instantiate(coinPrefab);
-        newCoin.SetActive(false);
-        coinPool.Add(newCoin);
-        return newCoin;
     }
 
-    GameObject GetPooledMagnet()
+    void OnDisable()
     {
-        for (int i = 0; i < magnetPool.Count; i++)
+        // Obje arkada kalıp silindiğinde (havuza döndüğünde) görünmez kalmaması için düzelt
+        if (renderers != null)
         {
-            if (!magnetPool[i].activeInHierarchy) return magnetPool[i];
+            foreach(MeshRenderer mr in renderers) mr.enabled = true;
         }
-        GameObject newMagnet = Instantiate(magnetPrefab);
-        newMagnet.SetActive(false);
-        magnetPool.Add(newMagnet);
-        return newMagnet;
     }
 }

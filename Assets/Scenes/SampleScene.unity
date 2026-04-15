@@ -1354,10 +1354,15 @@ MonoBehaviour:
   magnetPoolSize: 10
   magnetRotationOffset: {x: 0, y: 0, z: 0}
   magnetSpawnChance: 10
+  nitroPrefab: {fileID: 5225455176718880169, guid: 59fd80584945fc7448940995b97dab30, type: 3}
+  nitroPoolSize: 3
+  nitroRotationOffset: {x: 0, y: 0, z: 0}
+  nitroSpawnChance: 100
   playerCar: {fileID: 0}
   spawnDistanceAhead: 60
   laneDistance: 3.3
   spawnDistanceInterval: 25
+  minSpawnsBetweenPowerUps: 10
 --- !u!4 &854540666
 Transform:
   m_ObjectHideFlags: 0

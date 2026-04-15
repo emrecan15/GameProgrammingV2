@@ -23,13 +23,18 @@ public class CarController : MonoBehaviour
     public float turnAngle = 15.0f;
     public float turnSpeed = 15.0f;
 
-    [Header("Güçlendiriciler")]
+    [Header("Güçlendiriciler (Mıknatıs)")]
     [HideInInspector] public bool isMagnetActive = false;
     public float magnetDuration = 10f;
     public float magnetRadius = 25f;
     public float magnetPullSpeed = 50f;
 
-    // --- KAMERANIN OKUDUĞU 2 DEĞİŞKEN ---
+    [Header("Güçlendiriciler (Nitro)")]
+    [HideInInspector] public bool isNitroActive = false;
+    [HideInInspector] public bool isNitroEnding = false; // YENİ: Bitiş uyarısı
+    public float nitroDuration = 5f; 
+    public float nitroSpeedMultiplier = 1.8f; 
+
     [HideInInspector] public Vector3 currentTrackForward;
     [HideInInspector] public float publicXOffset;
 
@@ -38,29 +43,15 @@ public class CarController : MonoBehaviour
     private float xOffsetVelocity = 0f;
     private float cachedSplineLength;
 
-    // Kaza durumunu takip eden değişken
     private bool isDead = false;
+    private float originalMaxSpeed;
+    private float originalAcceleration;
 
     void Awake()
     {
-        // 1. Eğer araba Prefab'dan doğduysa ve yol boşsa, yeryüzündeki yolu otomatik bul!
-        if (trackSpline == null)
-        {
-            trackSpline = FindFirstObjectByType<SplineContainer>();
-        }
+        if (trackSpline == null) trackSpline = FindFirstObjectByType<SplineContainer>();
+        if (trackSpline != null) cachedSplineLength = trackSpline.CalculateLength();
 
-        // Yolu bulduktan sonra uzunluğunu hesapla
-        if (trackSpline != null)
-        {
-            cachedSplineLength = trackSpline.CalculateLength();
-        }
-        else
-        {
-            Debug.LogError("Sahnede SplineContainer (Yol) bulunamadı! Hiyerarşide yol olduğuna emin ol.");
-        }
-
-        // 2. KOPAN BAĞLANTILARI OTOMATİK TAMİR ET (Market Sistemi İçin)
-        // Araba doğar doğmaz tüm yöneticilere kendini tanıtır
         RoadManager rm = FindFirstObjectByType<RoadManager>();
         if (rm != null) rm.playerCar = this;
 
@@ -69,6 +60,9 @@ public class CarController : MonoBehaviour
 
         CameraFollow cam = FindFirstObjectByType<CameraFollow>();
         if (cam != null) cam.target = this.transform;
+
+        originalMaxSpeed = maxSpeed;
+        originalAcceleration = acceleration;
     }
 
     void Start()
@@ -78,7 +72,6 @@ public class CarController : MonoBehaviour
 
     void Update()
     {
-        // Eğer öldüysek veya yol hala bulunamadıysa hiçbir hesaplama yapma, araç olduğu yerde kalsın
         if (isDead || trackSpline == null) return;
 
         HandleSpeed();
@@ -88,7 +81,13 @@ public class CarController : MonoBehaviour
 
     void HandleSpeed()
     {
-        if (forwardSpeed < maxSpeed) forwardSpeed += acceleration * Time.deltaTime;
+        float targetMaxSpeed = isNitroActive ? originalMaxSpeed * nitroSpeedMultiplier : originalMaxSpeed;
+        float currentAccel = isNitroActive ? originalAcceleration * 5f : originalAcceleration * 2f;
+
+        if (forwardSpeed < targetMaxSpeed) 
+            forwardSpeed += currentAccel * Time.deltaTime;
+        else if (forwardSpeed > targetMaxSpeed)
+            forwardSpeed -= currentAccel * Time.deltaTime;
     }
 
     void HandleInput()
@@ -115,7 +114,6 @@ public class CarController : MonoBehaviour
         up = math.normalize(up);
         float3 right = math.cross(up, forward);
 
-        // Değişkenleri güncelle (Kameranın çalışması için)
         currentTrackForward = (Vector3)forward;
         publicXOffset = currentXOffset;
 
@@ -136,35 +134,73 @@ public class CarController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // Daha önce ölmediysek ve bir engele çarptıysak
         if (!isDead && other.CompareTag("Obstacle"))
         {
-            isDead = true; // Hareketi kilitle
-            forwardSpeed = 0; // Hızı sıfırla
-
-            if (GameManager.Instance != null)
-                GameManager.Instance.GameOver();
+            // Eğer uyarı (yanıp sönme) aşamasında engele değersek ve nitro açıksa engeli yok et
+            if (isNitroActive)
+            {
+                other.gameObject.SetActive(false); 
+            }
+            else
+            {
+                isDead = true; 
+                forwardSpeed = 0; 
+                if (GameManager.Instance != null) GameManager.Instance.GameOver();
+            }
         }
         else if (!isDead && other.CompareTag("Coin"))
         {
-            if (GameManager.Instance != null)
-                GameManager.Instance.AddCoin();
-
+            if (GameManager.Instance != null) GameManager.Instance.AddCoin();
             other.gameObject.SetActive(false);
         }
-        // YENİ: Mıknatıs Toplama
         else if (!isDead && other.CompareTag("Magnet"))
         {
-            StartCoroutine(MagnetRoutine()); // Mıknatıs süresini başlat
-            other.gameObject.SetActive(false); // Mıknatısı gizle
+            StartCoroutine(MagnetRoutine()); 
+            other.gameObject.SetActive(false); 
+        }
+        else if (!isDead && other.CompareTag("Nitro"))
+        {
+            StartCoroutine(NitroRoutine());
+            other.gameObject.SetActive(false);
         }
     }
 
-    // YENİ: Mıknatıs Süresi
     private System.Collections.IEnumerator MagnetRoutine()
     {
         isMagnetActive = true;
         yield return new WaitForSeconds(magnetDuration);
         isMagnetActive = false;
+    }
+
+    // YENİ: Zamanlayıcı ve Yol Temizleme Algoritması
+    private System.Collections.IEnumerator NitroRoutine()
+    {
+        isNitroActive = true;
+        isNitroEnding = false;
+
+        // 1. Nitroyu alınca yoldaki mevcut tüm engelleri anında gizle (Yolu boşalt)
+        GameObject[] activeObstacles = GameObject.FindGameObjectsWithTag("Obstacle");
+        foreach(GameObject obs in activeObstacles)
+        {
+            obs.SetActive(false);
+        }
+
+        // 2. Geri Sayım Başlıyor
+        float timer = nitroDuration;
+        while (timer > 0)
+        {
+            timer -= Time.deltaTime;
+
+            // Son 2 saniye kala "Yanıp Sönme" moduna geç
+            if (timer <= 2.0f && !isNitroEnding)
+            {
+                isNitroEnding = true;
+            }
+
+            yield return null;
+        }
+
+        isNitroActive = false;
+        isNitroEnding = false;
     }
 }
