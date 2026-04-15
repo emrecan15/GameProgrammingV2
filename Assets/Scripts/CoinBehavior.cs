@@ -56,6 +56,12 @@ public class CoinBehavior : MonoBehaviour
                 if (GameManager.Instance != null)
                 {
                     GameManager.Instance.AddCoin(); // Skoru/Altını artır
+                    
+                    // YENİ: 2x Altın (Double Coin) gücü aktifse bir altın daha ver!
+                    if (carController.isDoubleCoinActive)
+                    {
+                        GameManager.Instance.AddCoin(); 
+                    }
                 }
                 
                 gameObject.SetActive(false); // Altını sahneden gizle (Havuza yolla)

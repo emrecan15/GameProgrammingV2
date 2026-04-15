@@ -6,7 +6,7 @@ using Unity.Mathematics;
 public class CarController : MonoBehaviour
 {
 	[Header("Efektler (SFX)")]
-	public AudioSource driftAudio;    // Sadece Kayma Sesi kaldı
+	public AudioSource driftAudio;
 
 	[Header("Spline Ayarları")]
 	public SplineContainer trackSpline;
@@ -38,6 +38,10 @@ public class CarController : MonoBehaviour
 	public float nitroDuration = 5f;
 	public float nitroSpeedMultiplier = 1.8f;
 
+	[Header("Güçlendiriciler (2x Altın)")]
+	[HideInInspector] public bool isDoubleCoinActive = false;
+	public float doubleCoinDuration = 10f; 
+
 	[HideInInspector] public Vector3 currentTrackForward;
 	[HideInInspector] public float publicXOffset;
 
@@ -47,12 +51,14 @@ public class CarController : MonoBehaviour
 	private float cachedSplineLength;
 
 	private bool isDead = false;
-	private float originalMaxSpeed;
-	private float originalAcceleration;
+	private float baseForwardSpeed;
+
+	private Coroutine magnetCoroutine;
+	private Coroutine nitroCoroutine;
+	private Coroutine doubleCoinCoroutine;
 
 	void Awake()
 	{
-		// Ses bileşenini otomatik bul
 		if (driftAudio == null) driftAudio = GetComponent<AudioSource>();
 
 		if (trackSpline == null) trackSpline = FindFirstObjectByType<SplineContainer>();
@@ -67,8 +73,7 @@ public class CarController : MonoBehaviour
 		CameraFollow cam = FindFirstObjectByType<CameraFollow>();
 		if (cam != null) cam.target = this.transform;
 
-		originalMaxSpeed = maxSpeed;
-		originalAcceleration = acceleration;
+		baseForwardSpeed = forwardSpeed;
 	}
 
 	void Start()
@@ -87,13 +92,27 @@ public class CarController : MonoBehaviour
 
 	void HandleSpeed()
 	{
-		float targetMaxSpeed = isNitroActive ? originalMaxSpeed * nitroSpeedMultiplier : originalMaxSpeed;
-		float currentAccel = isNitroActive ? originalAcceleration * 5f : originalAcceleration * 2f;
+		if (baseForwardSpeed < maxSpeed)
+		{
+			baseForwardSpeed += acceleration * Time.deltaTime;
+		}
 
-		if (forwardSpeed < targetMaxSpeed)
-			forwardSpeed += currentAccel * Time.deltaTime;
-		else if (forwardSpeed > targetMaxSpeed)
-			forwardSpeed -= currentAccel * Time.deltaTime;
+		if (isNitroActive)
+		{
+			float nitroTargetSpeed = maxSpeed * nitroSpeedMultiplier; 
+			forwardSpeed = Mathf.MoveTowards(forwardSpeed, nitroTargetSpeed, 60f * Time.deltaTime);
+		}
+		else
+		{
+			if (forwardSpeed > baseForwardSpeed)
+			{
+				forwardSpeed = Mathf.MoveTowards(forwardSpeed, baseForwardSpeed, 80f * Time.deltaTime);
+			}
+			else
+			{
+				forwardSpeed = baseForwardSpeed;
+			}
+		}
 	}
 
 	void HandleInput()
@@ -154,7 +173,11 @@ public class CarController : MonoBehaviour
 	{
 		if (!isDead && other.CompareTag("Obstacle"))
 		{
-			if (isNitroActive)
+			// YENİ VE KRİTİK: Araba normal hızından (baseForwardSpeed) 5 birim bile daha hızlıysa
+			// demek ki nitro sonrası hala frene basma (yavaşlama) evresindedir. Buldozer devam etsin!
+			bool isBrakingFromNitro = forwardSpeed > (baseForwardSpeed + 5f);
+
+			if (isNitroActive || isBrakingFromNitro)
 			{
 				other.gameObject.SetActive(false);
 			}
@@ -167,17 +190,29 @@ public class CarController : MonoBehaviour
 		}
 		else if (!isDead && other.CompareTag("Coin"))
 		{
-			if (GameManager.Instance != null) GameManager.Instance.AddCoin();
+			if (GameManager.Instance != null)
+			{
+				GameManager.Instance.AddCoin();
+				if (isDoubleCoinActive) GameManager.Instance.AddCoin();
+			}
 			other.gameObject.SetActive(false);
 		}
 		else if (!isDead && other.CompareTag("Magnet"))
 		{
-			StartCoroutine(MagnetRoutine());
+			if (magnetCoroutine != null) StopCoroutine(magnetCoroutine);
+			magnetCoroutine = StartCoroutine(MagnetRoutine());
 			other.gameObject.SetActive(false);
 		}
 		else if (!isDead && other.CompareTag("Nitro"))
 		{
-			StartCoroutine(NitroRoutine());
+			if (nitroCoroutine != null) StopCoroutine(nitroCoroutine);
+			nitroCoroutine = StartCoroutine(NitroRoutine());
+			other.gameObject.SetActive(false);
+		}
+		else if (!isDead && other.CompareTag("DoubleCoin"))
+		{
+			if (doubleCoinCoroutine != null) StopCoroutine(doubleCoinCoroutine);
+			doubleCoinCoroutine = StartCoroutine(DoubleCoinRoutine());
 			other.gameObject.SetActive(false);
 		}
 	}
@@ -215,5 +250,12 @@ public class CarController : MonoBehaviour
 
 		isNitroActive = false;
 		isNitroEnding = false;
+	}
+
+	private System.Collections.IEnumerator DoubleCoinRoutine()
+	{
+		isDoubleCoinActive = true;
+		yield return new WaitForSeconds(doubleCoinDuration);
+		isDoubleCoinActive = false;
 	}
 }

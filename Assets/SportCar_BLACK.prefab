@@ -366,13 +366,15 @@ MonoBehaviour:
   turnAngle: 15
   turnSpeed: 15
   isMagnetActive: 0
-  magnetDuration: 20
-  magnetRadius: 40
+  magnetDuration: 10
+  magnetRadius: 50
   magnetPullSpeed: 150
   isNitroActive: 0
   isNitroEnding: 0
-  nitroDuration: 5
-  nitroSpeedMultiplier: 1.8
+  nitroDuration: 10
+  nitroSpeedMultiplier: 1.5
+  isDoubleCoinActive: 0
+  doubleCoinDuration: 10
   currentTrackForward: {x: 0, y: 0, z: 0}
   publicXOffset: 0
 --- !u!54 &4535731126203505748

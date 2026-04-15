@@ -1360,6 +1360,10 @@ MonoBehaviour:
   nitroPoolSize: 100
   nitroRotationOffset: {x: 0, y: 0, z: 0}
   nitroSpawnChance: 25
+  doubleCoinPrefab: {fileID: 5310963310368244162, guid: 84b95e80250efd2408969492c3002afd, type: 3}
+  doubleCoinPoolSize: 100
+  doubleCoinRotationOffset: {x: 0, y: 0, z: 0}
+  doubleCoinSpawnChance: 25
   playerCar: {fileID: 0}
   spawnDistanceAhead: 60
   laneDistance: 3.3

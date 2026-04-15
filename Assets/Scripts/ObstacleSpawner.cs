@@ -20,7 +20,6 @@ public class ObstacleSpawner : MonoBehaviour
 
     [Header("Altın Desen Ayarları")]
     public float coinSpacing = 2.5f; 
-    // YENİ: Havaya zıplamak yerine yana doğru kıvrılma genişliği
     public float horizontalCurveWidth = 3.0f; 
 
     [Header("Havuz Ayarları (Mıknatıs)")]
@@ -36,6 +35,13 @@ public class ObstacleSpawner : MonoBehaviour
     public Vector3 nitroRotationOffset = new Vector3(0, 0, 0);
     private List<GameObject> nitroPool;
     [Range(0f, 100f)] public float nitroSpawnChance = 5f;
+
+    [Header("Havuz Ayarları (2x Altın)")]
+    public GameObject doubleCoinPrefab; // YENİ: 2x Objesi
+    public int doubleCoinPoolSize = 3;
+    public Vector3 doubleCoinRotationOffset = new Vector3(0, 0, 0);
+    private List<GameObject> doubleCoinPool;
+    [Range(0f, 100f)] public float doubleCoinSpawnChance = 5f;
 
     [Header("Doğma Ayarları (Spline)")]
     public CarController playerCar;
@@ -81,6 +87,7 @@ public class ObstacleSpawner : MonoBehaviour
         coinPool = CreatePool(coinPrefab, coinPoolSize);
         magnetPool = CreatePool(magnetPrefab, magnetPoolSize);
         nitroPool = CreatePool(nitroPrefab, nitroPoolSize); 
+        doubleCoinPool = CreatePool(doubleCoinPrefab, doubleCoinPoolSize); // YENİ: 2x Havuzunu oluştur
     }
 
     List<GameObject> CreatePool(GameObject prefab, int size)
@@ -168,6 +175,12 @@ public class ObstacleSpawner : MonoBehaviour
                 SpawnFromPool(nitroPool, availableLanes[0], baseRotation, nitroRotationOffset, pos, right);
                 currentPowerUpCooldown = minSpawnsBetweenPowerUps;
             }
+            // YENİ: Mıknatıs veya Nitro çıkmadıysa 2x gücünü şanslıysa çıkar
+            else if (doubleCoinPool != null && doubleCoinPool.Count > 0 && !playerCar.isDoubleCoinActive && powerUpRoll <= (magnetSpawnChance + nitroSpawnChance + doubleCoinSpawnChance))
+            {
+                SpawnFromPool(doubleCoinPool, availableLanes[0], baseRotation, doubleCoinRotationOffset, pos, right);
+                currentPowerUpCooldown = minSpawnsBetweenPowerUps;
+            }
         }
     }
 
@@ -178,8 +191,7 @@ public class ObstacleSpawner : MonoBehaviour
 
         if (patternType == 1 || patternType == 2) coinCount = 5; 
 
-        // YENİ: Kavisin yönünü belirleme (Yoldan çıkmasın diye)
-        // Eğer soldaysa (0) sağa kıvrıl, sağdaysa (2) sola kıvrıl, ortadaysa (1) rastgele seç.
+        // Kavisin yönünü belirleme (Yoldan çıkmasın diye)
         float curveDirection = (lane == 0) ? 1f : (lane == 2) ? -1f : (UnityEngine.Random.value > 0.5f ? 1f : -1f);
 
         for (int i = 0; i < coinCount; i++)
@@ -199,16 +211,14 @@ public class ObstacleSpawner : MonoBehaviour
             float yOffset = coinPrefab.transform.position.y;
             if (yOffset < 0.5f) yOffset = 0.5f;
 
-            // YENİ: Zıplama yerine, Yerde Yatay Kavis (X Ekseninde sağa/sola)
             if (patternType == 2)
             {
                 float t = (float)i / Mathf.Max(1, coinCount - 1); 
-                // Y'ye değil, X'e (yana) ekleme yapıyoruz
                 xPos += math.sin(t * math.PI) * (horizontalCurveWidth * curveDirection); 
             }
 
             Vector3 finalPos = (Vector3)cPos + ((Vector3)cRight * xPos);
-            finalPos.y += yOffset; // Altınlar yeryüzünde kalır
+            finalPos.y += yOffset; 
 
             coin.transform.position = finalPos;
             coin.transform.rotation = baseRot * Quaternion.Euler(coinRotationOffset);

@@ -8,6 +8,7 @@ TagManager:
   - Coin
   - Magnet
   - Nitro
+  - DoubleCoin
   layers:
   - Default
   - TransparentFX
