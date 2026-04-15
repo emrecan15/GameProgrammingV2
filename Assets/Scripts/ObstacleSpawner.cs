@@ -13,10 +13,15 @@ public class ObstacleSpawner : MonoBehaviour
 
     [Header("Havuz Ayarları (Altın)")]
     public GameObject coinPrefab;
-    public int coinPoolSize = 10;
+    public int coinPoolSize = 60; 
     public Vector3 coinRotationOffset = new Vector3(0, 0, 0);
     private List<GameObject> coinPool;
     [Range(0f, 100f)] public float coinSpawnChance = 60f;
+
+    [Header("Altın Desen Ayarları")]
+    public float coinSpacing = 2.5f; 
+    // YENİ: Havaya zıplamak yerine yana doğru kıvrılma genişliği
+    public float horizontalCurveWidth = 3.0f; 
 
     [Header("Havuz Ayarları (Mıknatıs)")]
     public GameObject magnetPrefab;
@@ -120,7 +125,6 @@ public class ObstacleSpawner : MonoBehaviour
         Quaternion baseRotation = Quaternion.LookRotation(forward, up);
         List<int> availableLanes = new List<int> { 0, 1, 2 };
 
-        // YENİ: Sadece Nitro yoksa VEYA nitro bitmek üzereyse Engel çıkart!
         bool shouldSpawnObstacle = !playerCar.isNitroActive || playerCar.isNitroEnding;
 
         if (poolList.Count > 0 && shouldSpawnObstacle)
@@ -129,25 +133,23 @@ public class ObstacleSpawner : MonoBehaviour
             availableLanes.Remove(obstacleLane); 
             int randomObstacleIndex = UnityEngine.Random.Range(0, poolList.Count);
             
-            // Engeli Yola Koy
             GameObject spawnedObstacle = SpawnFromPool(poolList[randomObstacleIndex], obstacleLane, baseRotation, obstacleRotationOffset, pos, right);
 
-            // YENİ: Eğer engel nitro biterken çıktıysa ona yanıp sönme uyarısı ekle
             if (playerCar.isNitroEnding && spawnedObstacle != null)
             {
                 BlinkEffect blinker = spawnedObstacle.GetComponent<BlinkEffect>();
-                if (blinker == null) blinker = spawnedObstacle.AddComponent<BlinkEffect>(); // Yoksa kodu objeye tak
-                blinker.StartBlinking(2.0f); // 2 saniye boyunca yanıp sönsün
+                if (blinker == null) blinker = spawnedObstacle.AddComponent<BlinkEffect>(); 
+                blinker.StartBlinking(2.0f); 
             }
         }
 
-        // Altın çıkmaya devam eder (Bomboş yolda altın toplamak keyiflidir)
         if (coinPool.Count > 0 && UnityEngine.Random.Range(0f, 100f) <= coinSpawnChance && availableLanes.Count > 0)
         {
             int randomIndex = UnityEngine.Random.Range(0, availableLanes.Count);
             int coinLane = availableLanes[randomIndex];
             availableLanes.Remove(coinLane); 
-            SpawnFromPool(coinPool, coinLane, baseRotation, coinRotationOffset, pos, right);
+            
+            SpawnCoinPattern(coinLane, spawnProgress, baseRotation);
         }
 
         if (currentPowerUpCooldown > 0) currentPowerUpCooldown--;
@@ -169,7 +171,60 @@ public class ObstacleSpawner : MonoBehaviour
         }
     }
 
-    // YENİ: İşlemler için çıkartılan Objeyi geriye döndürüyoruz (GameObject türünde)
+    void SpawnCoinPattern(int lane, float startProgress, Quaternion baseRot)
+    {
+        int patternType = UnityEngine.Random.Range(0, 3); // 0: Tekli, 1: Düz Çizgi, 2: Yatay Kavis (Slalom)
+        int coinCount = 1;
+
+        if (patternType == 1 || patternType == 2) coinCount = 5; 
+
+        // YENİ: Kavisin yönünü belirleme (Yoldan çıkmasın diye)
+        // Eğer soldaysa (0) sağa kıvrıl, sağdaysa (2) sola kıvrıl, ortadaysa (1) rastgele seç.
+        float curveDirection = (lane == 0) ? 1f : (lane == 2) ? -1f : (UnityEngine.Random.value > 0.5f ? 1f : -1f);
+
+        for (int i = 0; i < coinCount; i++)
+        {
+            GameObject coin = GetPooledCoin();
+            if (coin == null) break; 
+
+            float offsetDist = i * coinSpacing;
+            float currentSpawnDist = (startProgress * cachedSplineLength) + offsetDist;
+            float coinProgress = (currentSpawnDist % cachedSplineLength) / cachedSplineLength;
+
+            float3 cPos, cForward, cUp;
+            spline.Evaluate(coinProgress, out cPos, out cForward, out cUp);
+            float3 cRight = math.cross(math.normalize(cUp), math.normalize(cForward));
+
+            float xPos = (lane - 1) * laneDistance;
+            float yOffset = coinPrefab.transform.position.y;
+            if (yOffset < 0.5f) yOffset = 0.5f;
+
+            // YENİ: Zıplama yerine, Yerde Yatay Kavis (X Ekseninde sağa/sola)
+            if (patternType == 2)
+            {
+                float t = (float)i / Mathf.Max(1, coinCount - 1); 
+                // Y'ye değil, X'e (yana) ekleme yapıyoruz
+                xPos += math.sin(t * math.PI) * (horizontalCurveWidth * curveDirection); 
+            }
+
+            Vector3 finalPos = (Vector3)cPos + ((Vector3)cRight * xPos);
+            finalPos.y += yOffset; // Altınlar yeryüzünde kalır
+
+            coin.transform.position = finalPos;
+            coin.transform.rotation = baseRot * Quaternion.Euler(coinRotationOffset);
+            coin.SetActive(true);
+        }
+    }
+
+    GameObject GetPooledCoin()
+    {
+        foreach (GameObject obj in coinPool)
+        {
+            if (!obj.activeInHierarchy) return obj;
+        }
+        return null;
+    }
+
     GameObject SpawnFromPool(List<GameObject> pool, int lane, Quaternion baseRot, Vector3 rotOffset, float3 pos, float3 right)
     {
         if (pool == null || pool.Count == 0) return null;
@@ -187,14 +242,13 @@ public class ObstacleSpawner : MonoBehaviour
                 obj.transform.position = finalPos;
                 obj.transform.rotation = baseRot * Quaternion.Euler(rotOffset);
                 obj.SetActive(true);
-                return obj; // Çıkan objeyi yolla ki efekt takabilelim
+                return obj; 
             }
         }
         return null;
     }
 }
 
-// --- YANIP SÖNME EFEKTİ KODU (Başka dosya açmana gerek yok, burada durması yeterli) ---
 public class BlinkEffect : MonoBehaviour
 {
     private float blinkDuration;
@@ -205,7 +259,6 @@ public class BlinkEffect : MonoBehaviour
     {
         blinkDuration = duration;
         timer = 0;
-        // Engelin üzerindeki tüm görsel ağları (Mesh) bul
         renderers = GetComponentsInChildren<MeshRenderer>();
     }
 
@@ -214,15 +267,8 @@ public class BlinkEffect : MonoBehaviour
         if (timer < blinkDuration)
         {
             timer += Time.deltaTime;
-            // Mathf.PingPong ile 0.1 saniyede bir görünür/görünmez yap
             bool isVisible = Mathf.PingPong(Time.time * 15f, 1f) > 0.5f;
-
-            foreach(MeshRenderer mr in renderers)
-            {
-                mr.enabled = isVisible;
-            }
-
-            // Süre bittiğinde objeyi tamamen görünür hale kilitle
+            foreach(MeshRenderer mr in renderers) mr.enabled = isVisible;
             if (timer >= blinkDuration)
             {
                 foreach(MeshRenderer mr in renderers) mr.enabled = true;
@@ -232,7 +278,6 @@ public class BlinkEffect : MonoBehaviour
 
     void OnDisable()
     {
-        // Obje arkada kalıp silindiğinde (havuza döndüğünde) görünmez kalmaması için düzelt
         if (renderers != null)
         {
             foreach(MeshRenderer mr in renderers) mr.enabled = true;

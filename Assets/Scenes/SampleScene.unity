@@ -1347,17 +1347,17 @@ MonoBehaviour:
   poolSizePerPrefab: 5
   obstacleRotationOffset: {x: 0, y: 0, z: 0}
   coinPrefab: {fileID: 3828344839509127815, guid: aae408897e8f17f44aff9515a6e81535, type: 3}
-  coinPoolSize: 10
+  coinPoolSize: 10000
   coinRotationOffset: {x: 90, y: 0, z: 0}
-  coinSpawnChance: 60
+  coinSpawnChance: 100
   magnetPrefab: {fileID: 8050537342152234946, guid: 50e260f821baa56419af96b848301e5d, type: 3}
-  magnetPoolSize: 10
+  magnetPoolSize: 100
   magnetRotationOffset: {x: 0, y: 0, z: 0}
-  magnetSpawnChance: 10
+  magnetSpawnChance: 25
   nitroPrefab: {fileID: 5225455176718880169, guid: 59fd80584945fc7448940995b97dab30, type: 3}
-  nitroPoolSize: 3
+  nitroPoolSize: 100
   nitroRotationOffset: {x: 0, y: 0, z: 0}
-  nitroSpawnChance: 100
+  nitroSpawnChance: 25
   playerCar: {fileID: 0}
   spawnDistanceAhead: 60
   laneDistance: 3.3
