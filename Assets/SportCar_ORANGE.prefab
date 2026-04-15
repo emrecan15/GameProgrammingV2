@@ -354,7 +354,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2047e3007c805ba41b8398f6c6cd71e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CarController
-  driftSmoke: {fileID: 0}
   driftAudio: {fileID: 0}
   trackSpline: {fileID: 0}
   progress: 0
@@ -367,13 +366,15 @@ MonoBehaviour:
   turnAngle: 15
   turnSpeed: 15
   isMagnetActive: 0
-  magnetDuration: 20
-  magnetRadius: 40
+  magnetDuration: 10
+  magnetRadius: 50
   magnetPullSpeed: 150
   isNitroActive: 0
   isNitroEnding: 0
   nitroDuration: 5
   nitroSpeedMultiplier: 1.8
+  isDoubleCoinActive: 0
+  doubleCoinDuration: 10
   currentTrackForward: {x: 0, y: 0, z: 0}
   publicXOffset: 0
 --- !u!54 &4535731126203505748

@@ -1341,17 +1341,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ObstacleSpawner
   obstaclePrefabs:
-  - {fileID: 1671958507336764577, guid: ccd706a16ea864941a9cabb4857796a1, type: 3}
-  - {fileID: 3891183066976726858, guid: db85732ec3820934399d5d7c2d6ec5b8, type: 3}
-  - {fileID: 7738698209782943608, guid: d74f5250ac649db40915fbdfcdd152c6, type: 3}
+  - {fileID: 6880241878869810336, guid: 3d51b344728598043bb2e30e6570c054, type: 3}
+  - {fileID: 8810740924654255357, guid: 6ca31454312a28e46bbbcdd24a83df48, type: 3}
+  - {fileID: 463159973256271452, guid: 1f98b0fb92c6f184b81db205653ab19c, type: 3}
+  - {fileID: 7118762931400538822, guid: 3201962d4d6aec94fbfe2d6cc7a9a2d1, type: 3}
+  - {fileID: 5397173380847203626, guid: 9ea1b211869c72f41a670e2ac0525657, type: 3}
   poolSizePerPrefab: 5
   obstacleRotationOffset: {x: 0, y: 0, z: 0}
   coinPrefab: {fileID: 6954758372675618198, guid: 6a301d09debaf1e4a8d3e2657cc44a96, type: 3}
   coinPoolSize: 100
   coinRotationOffset: {x: 0, y: 0, z: 0}
   coinSpawnChance: 100
-  coinSpacing: 2.5
-  horizontalCurveWidth: 3
+  coinSpacing: 5
+  horizontalCurveWidth: 6
   magnetPrefab: {fileID: 8050537342152234946, guid: 50e260f821baa56419af96b848301e5d, type: 3}
   magnetPoolSize: 100
   magnetRotationOffset: {x: 0, y: 0, z: 0}
