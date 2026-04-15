@@ -1346,10 +1346,12 @@ MonoBehaviour:
   - {fileID: 7738698209782943608, guid: d74f5250ac649db40915fbdfcdd152c6, type: 3}
   poolSizePerPrefab: 5
   obstacleRotationOffset: {x: 0, y: 0, z: 0}
-  coinPrefab: {fileID: 3828344839509127815, guid: aae408897e8f17f44aff9515a6e81535, type: 3}
-  coinPoolSize: 10000
-  coinRotationOffset: {x: 90, y: 0, z: 0}
+  coinPrefab: {fileID: 6954758372675618198, guid: 6a301d09debaf1e4a8d3e2657cc44a96, type: 3}
+  coinPoolSize: 100
+  coinRotationOffset: {x: 0, y: 0, z: 0}
   coinSpawnChance: 100
+  coinSpacing: 2.5
+  horizontalCurveWidth: 3
   magnetPrefab: {fileID: 8050537342152234946, guid: 50e260f821baa56419af96b848301e5d, type: 3}
   magnetPoolSize: 100
   magnetRotationOffset: {x: 0, y: 0, z: 0}
