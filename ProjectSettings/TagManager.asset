@@ -9,6 +9,7 @@ TagManager:
   - Magnet
   - Nitro
   - DoubleCoin
+  - Shield
   layers:
   - Default
   - TransparentFX

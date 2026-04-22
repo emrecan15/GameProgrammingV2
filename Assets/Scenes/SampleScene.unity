@@ -298,6 +298,7 @@ MonoBehaviour:
   - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
   - {fileID: 4775358128559842662, guid: 5c358407e7dc1e442b70c0ea08a6d91d, type: 3}
   - {fileID: 4775358128559842662, guid: 2acf5cfe123f9ad4fbb2493e45f56cbd, type: 3}
+  - {fileID: 4775358128559842662, guid: 7c6ecef490a07934b928dd56b7703d7e, type: 3}
   roadLength: 30
   amountOfRoadsOnScreen: 7
   tunnelStartPrefab: {fileID: 4775358128559842662, guid: ed25645ed113e1b4ea1f521ed101b152, type: 3}
@@ -1368,6 +1369,10 @@ MonoBehaviour:
   doubleCoinPoolSize: 100
   doubleCoinRotationOffset: {x: 0, y: 0, z: 0}
   doubleCoinSpawnChance: 25
+  shieldPrefab: {fileID: 8475833574052523601, guid: a1614f0cf649e3a4e894d20bda9008e7, type: 3}
+  shieldPoolSize: 100
+  shieldRotationOffset: {x: 0, y: 0, z: 0}
+  shieldSpawnChance: 25
   playerCar: {fileID: 0}
   spawnDistanceAhead: 60
   laneDistance: 3.3

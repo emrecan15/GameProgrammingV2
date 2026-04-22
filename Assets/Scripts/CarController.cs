@@ -42,6 +42,11 @@ public class CarController : MonoBehaviour
 	[HideInInspector] public bool isDoubleCoinActive = false;
 	public float doubleCoinDuration = 10f; 
 
+	[Header("Güçlendiriciler (Kalkan)")]
+	[HideInInspector] public bool isShieldActive = false;
+	public float shieldDuration = 15f; 
+	public GameObject shieldVisual; 
+
 	[HideInInspector] public Vector3 currentTrackForward;
 	[HideInInspector] public float publicXOffset;
 
@@ -56,6 +61,7 @@ public class CarController : MonoBehaviour
 	private Coroutine magnetCoroutine;
 	private Coroutine nitroCoroutine;
 	private Coroutine doubleCoinCoroutine;
+	private Coroutine shieldCoroutine;
 
 	void Awake()
 	{
@@ -74,6 +80,8 @@ public class CarController : MonoBehaviour
 		if (cam != null) cam.target = this.transform;
 
 		baseForwardSpeed = forwardSpeed;
+		
+		if (shieldVisual != null) shieldVisual.SetActive(false);
 	}
 
 	void Start()
@@ -171,15 +179,22 @@ public class CarController : MonoBehaviour
 
 	private void OnTriggerEnter(Collider other)
 	{
-		if (!isDead && other.CompareTag("Obstacle"))
+		if (isDead) return;
+
+		if (other.CompareTag("Obstacle"))
 		{
-			// YENİ VE KRİTİK: Araba normal hızından (baseForwardSpeed) 5 birim bile daha hızlıysa
-			// demek ki nitro sonrası hala frene basma (yavaşlama) evresindedir. Buldozer devam etsin!
 			bool isBrakingFromNitro = forwardSpeed > (baseForwardSpeed + 5f);
 
 			if (isNitroActive || isBrakingFromNitro)
 			{
 				other.gameObject.SetActive(false);
+			}
+			else if (isShieldActive)
+			{
+				isShieldActive = false;
+				if (shieldVisual != null) shieldVisual.SetActive(false); 
+				if (shieldCoroutine != null) StopCoroutine(shieldCoroutine); 
+				other.gameObject.SetActive(false); 
 			}
 			else
 			{
@@ -188,7 +203,7 @@ public class CarController : MonoBehaviour
 				if (GameManager.Instance != null) GameManager.Instance.GameOver();
 			}
 		}
-		else if (!isDead && other.CompareTag("Coin"))
+		else if (other.CompareTag("Coin"))
 		{
 			if (GameManager.Instance != null)
 			{
@@ -197,22 +212,28 @@ public class CarController : MonoBehaviour
 			}
 			other.gameObject.SetActive(false);
 		}
-		else if (!isDead && other.CompareTag("Magnet"))
+		else if (other.CompareTag("Magnet"))
 		{
 			if (magnetCoroutine != null) StopCoroutine(magnetCoroutine);
 			magnetCoroutine = StartCoroutine(MagnetRoutine());
 			other.gameObject.SetActive(false);
 		}
-		else if (!isDead && other.CompareTag("Nitro"))
+		else if (other.CompareTag("Nitro"))
 		{
 			if (nitroCoroutine != null) StopCoroutine(nitroCoroutine);
 			nitroCoroutine = StartCoroutine(NitroRoutine());
 			other.gameObject.SetActive(false);
 		}
-		else if (!isDead && other.CompareTag("DoubleCoin"))
+		else if (other.CompareTag("DoubleCoin"))
 		{
 			if (doubleCoinCoroutine != null) StopCoroutine(doubleCoinCoroutine);
 			doubleCoinCoroutine = StartCoroutine(DoubleCoinRoutine());
+			other.gameObject.SetActive(false);
+		}
+		else if (other.CompareTag("Shield"))
+		{
+			if (shieldCoroutine != null) StopCoroutine(shieldCoroutine);
+			shieldCoroutine = StartCoroutine(ShieldRoutine());
 			other.gameObject.SetActive(false);
 		}
 	}
@@ -239,12 +260,7 @@ public class CarController : MonoBehaviour
 		while (timer > 0)
 		{
 			timer -= Time.deltaTime;
-
-			if (timer <= 2.0f && !isNitroEnding)
-			{
-				isNitroEnding = true;
-			}
-
+			if (timer <= 2.0f && !isNitroEnding) isNitroEnding = true;
 			yield return null;
 		}
 
@@ -257,5 +273,37 @@ public class CarController : MonoBehaviour
 		isDoubleCoinActive = true;
 		yield return new WaitForSeconds(doubleCoinDuration);
 		isDoubleCoinActive = false;
+	}
+
+	// YENİDEN YAZILAN KALKAN FONKSİYONU
+	private System.Collections.IEnumerator ShieldRoutine()
+	{
+		isShieldActive = true;
+		if (shieldVisual != null) shieldVisual.SetActive(true);
+
+		// Yanıp sönme kodunu al
+		BlinkVisual blinker = shieldVisual.GetComponent<BlinkVisual>();
+
+		float timer = shieldDuration;
+		bool blinkingStarted = false;
+
+		while (timer > 0)
+		{
+			timer -= Time.deltaTime;
+
+			// Son 3 saniye kala yanıp sönmeyi başlat
+			if (timer <= 3.0f && !blinkingStarted)
+			{
+				blinkingStarted = true;
+				if (blinker != null) blinker.StartBlinking();
+			}
+
+			yield return null;
+		}
+
+		// Süre bittiğinde kalkanı kapat ve yanıp sönmeyi durdur
+		isShieldActive = false;
+		if (blinker != null) blinker.StopBlinking();
+		if (shieldVisual != null) shieldVisual.SetActive(false);
 	}
 }
