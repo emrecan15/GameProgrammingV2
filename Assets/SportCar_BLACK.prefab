@@ -368,7 +368,7 @@ MonoBehaviour:
   isMagnetActive: 0
   magnetDuration: 10
   magnetRadius: 50
-  magnetPullSpeed: 150
+  magnetPullSpeed: 200
   isNitroActive: 0
   isNitroEnding: 0
   nitroDuration: 10
