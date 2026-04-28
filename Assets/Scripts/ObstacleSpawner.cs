@@ -13,14 +13,10 @@ public class ObstacleSpawner : MonoBehaviour
 
     [Header("Havuz Ayarları (Altın)")]
     public GameObject coinPrefab;
-    public int coinPoolSize = 60; 
+    public int coinPoolSize = 30; // Sayı azaldığı için havuzu da küçülttük
     public Vector3 coinRotationOffset = new Vector3(0, 0, 0);
     private List<GameObject> coinPool;
     [Range(0f, 100f)] public float coinSpawnChance = 60f;
-
-    [Header("Altın Desen Ayarları")]
-    public float coinSpacing = 4.5f; 
-    public float horizontalCurveWidth = 6.0f; 
 
     [Header("Havuz Ayarları (Mıknatıs)")]
     public GameObject magnetPrefab;
@@ -44,7 +40,7 @@ public class ObstacleSpawner : MonoBehaviour
     [Range(0f, 100f)] public float doubleCoinSpawnChance = 5f;
 
     [Header("Havuz Ayarları (Kalkan)")]
-    public GameObject shieldPrefab; // YENİ: Kalkan objesi
+    public GameObject shieldPrefab; 
     public int shieldPoolSize = 3;
     public Vector3 shieldRotationOffset = new Vector3(0, 0, 0);
     private List<GameObject> shieldPool;
@@ -92,7 +88,7 @@ public class ObstacleSpawner : MonoBehaviour
         magnetPool = CreatePool(magnetPrefab, magnetPoolSize);
         nitroPool = CreatePool(nitroPrefab, nitroPoolSize); 
         doubleCoinPool = CreatePool(doubleCoinPrefab, doubleCoinPoolSize);
-        shieldPool = CreatePool(shieldPrefab, shieldPoolSize); // Havuzu oluştur
+        shieldPool = CreatePool(shieldPrefab, shieldPoolSize);
     }
 
     List<GameObject> CreatePool(GameObject prefab, int size)
@@ -143,22 +139,17 @@ public class ObstacleSpawner : MonoBehaviour
             availableLanes.Remove(obstacleLane); 
             int randomObstacleIndex = UnityEngine.Random.Range(0, poolList.Count);
             
-            GameObject spawnedObstacle = SpawnFromPool(poolList[randomObstacleIndex], obstacleLane, baseRotation, obstacleRotationOffset, pos, right);
-
-            if (playerCar.isNitroEnding && spawnedObstacle != null)
-            {
-                BlinkEffect blinker = spawnedObstacle.GetComponent<BlinkEffect>();
-                if (blinker == null) blinker = spawnedObstacle.AddComponent<BlinkEffect>(); 
-                blinker.StartBlinking(2.0f); 
-            }
+            SpawnFromPool(poolList[randomObstacleIndex], obstacleLane, baseRotation, obstacleRotationOffset, pos, right);
         }
 
+        // ARTIK SADECE TEK ALTIN ÇIKIYOR
         if (coinPool.Count > 0 && UnityEngine.Random.Range(0f, 100f) <= coinSpawnChance && availableLanes.Count > 0)
         {
             int randomIndex = UnityEngine.Random.Range(0, availableLanes.Count);
             int coinLane = availableLanes[randomIndex];
             availableLanes.Remove(coinLane); 
-            SpawnCoinPattern(coinLane, spawnProgress, baseRotation);
+            
+            SpawnSingleCoin(coinLane, spawnProgress, baseRotation);
         }
 
         if (currentPowerUpCooldown > 0) currentPowerUpCooldown--;
@@ -184,51 +175,32 @@ public class ObstacleSpawner : MonoBehaviour
             }
             else if (shieldPool.Count > 0 && !playerCar.isShieldActive && powerUpRoll <= (magnetSpawnChance + nitroSpawnChance + doubleCoinSpawnChance + shieldSpawnChance))
             {
-                // YENİ: Şans tutarsa Kalkan çıkart!
                 SpawnFromPool(shieldPool, availableLanes[0], baseRotation, shieldRotationOffset, pos, right);
                 currentPowerUpCooldown = minSpawnsBetweenPowerUps;
             }
         }
     }
 
-    void SpawnCoinPattern(int lane, float startProgress, Quaternion baseRot)
+    // DESENLERİ SİLDİK, YERİNE TEKLİ DOĞMA GELDİ
+    void SpawnSingleCoin(int lane, float progress, Quaternion baseRot)
     {
-        int patternType = UnityEngine.Random.Range(0, 3); 
-        int coinCount = 1;
+        GameObject coin = GetPooledCoin();
+        if (coin == null) return;
 
-        if (patternType == 1 || patternType == 2) coinCount = 5; 
-        float curveDirection = (lane == 0) ? 1f : (lane == 2) ? -1f : (UnityEngine.Random.value > 0.5f ? 1f : -1f);
+        float3 cPos, cForward, cUp;
+        spline.Evaluate(progress, out cPos, out cForward, out cUp);
+        float3 cRight = math.cross(math.normalize(cUp), math.normalize(cForward));
 
-        for (int i = 0; i < coinCount; i++)
-        {
-            GameObject coin = GetPooledCoin();
-            if (coin == null) break; 
+        float xPos = (lane - 1) * laneDistance;
+        float yOffset = coinPrefab.transform.position.y;
+        if (yOffset < 0.5f) yOffset = 0.5f;
 
-            float offsetDist = i * coinSpacing;
-            float currentSpawnDist = (startProgress * cachedSplineLength) + offsetDist;
-            float coinProgress = (currentSpawnDist % cachedSplineLength) / cachedSplineLength;
+        Vector3 finalPos = (Vector3)cPos + ((Vector3)cRight * xPos);
+        finalPos.y += yOffset;
 
-            float3 cPos, cForward, cUp;
-            spline.Evaluate(coinProgress, out cPos, out cForward, out cUp);
-            float3 cRight = math.cross(math.normalize(cUp), math.normalize(cForward));
-
-            float xPos = (lane - 1) * laneDistance;
-            float yOffset = coinPrefab.transform.position.y;
-            if (yOffset < 0.5f) yOffset = 0.5f;
-
-            if (patternType == 2)
-            {
-                float t = (float)i / Mathf.Max(1, coinCount - 1); 
-                xPos += math.sin(t * math.PI) * (horizontalCurveWidth * curveDirection); 
-            }
-
-            Vector3 finalPos = (Vector3)cPos + ((Vector3)cRight * xPos);
-            finalPos.y += yOffset; 
-
-            coin.transform.position = finalPos;
-            coin.transform.rotation = baseRot * Quaternion.Euler(coinRotationOffset);
-            coin.SetActive(true);
-        }
+        coin.transform.position = finalPos;
+        coin.transform.rotation = baseRot * Quaternion.Euler(coinRotationOffset);
+        coin.SetActive(true);
     }
 
     GameObject GetPooledCoin()
@@ -255,35 +227,5 @@ public class ObstacleSpawner : MonoBehaviour
             }
         }
         return null;
-    }
-}
-
-public class BlinkEffect : MonoBehaviour
-{
-    private float blinkDuration;
-    private float timer;
-    private MeshRenderer[] renderers;
-
-    public void StartBlinking(float duration)
-    {
-        blinkDuration = duration;
-        timer = 0;
-        renderers = GetComponentsInChildren<MeshRenderer>();
-    }
-
-    void Update()
-    {
-        if (timer < blinkDuration)
-        {
-            timer += Time.deltaTime;
-            bool isVisible = Mathf.PingPong(Time.time * 15f, 1f) > 0.5f;
-            foreach(MeshRenderer mr in renderers) mr.enabled = isVisible;
-            if (timer >= blinkDuration) foreach(MeshRenderer mr in renderers) mr.enabled = true;
-        }
-    }
-
-    void OnDisable()
-    {
-        if (renderers != null) foreach(MeshRenderer mr in renderers) mr.enabled = true;
     }
 }
