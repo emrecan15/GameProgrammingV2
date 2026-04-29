@@ -86,8 +86,9 @@ public class CarController : MonoBehaviour
 
 	void Start()
 	{
-		Application.targetFrameRate = 60;
-	}
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 120;
+    }
 
 	void Update()
 	{
