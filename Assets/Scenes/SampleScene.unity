@@ -299,6 +299,7 @@ MonoBehaviour:
   - {fileID: 4775358128559842662, guid: 5c358407e7dc1e442b70c0ea08a6d91d, type: 3}
   - {fileID: 4775358128559842662, guid: 2acf5cfe123f9ad4fbb2493e45f56cbd, type: 3}
   - {fileID: 4775358128559842662, guid: 7c6ecef490a07934b928dd56b7703d7e, type: 3}
+  - {fileID: 4775358128559842662, guid: 7eab159651a507f489467621641b3b1c, type: 3}
   roadLength: 30
   amountOfRoadsOnScreen: 7
   tunnelStartPrefab: {fileID: 4775358128559842662, guid: ed25645ed113e1b4ea1f521ed101b152, type: 3}
@@ -1355,8 +1356,6 @@ MonoBehaviour:
   coinPoolSize: 1000
   coinRotationOffset: {x: 0, y: 0, z: 0}
   coinSpawnChance: 100
-  coinSpacing: 0
-  horizontalCurveWidth: 0
   magnetPrefab: {fileID: 8050537342152234946, guid: 50e260f821baa56419af96b848301e5d, type: 3}
   magnetPoolSize: 100
   magnetRotationOffset: {x: 0, y: 0, z: 0}
