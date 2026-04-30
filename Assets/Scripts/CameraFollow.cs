@@ -2,20 +2,17 @@ using UnityEngine;
 
 public class CameraFollow : MonoBehaviour
 {
-    [Header("Takip Edilecek Obje")]
     public Transform target;
 
-    private CarController carController;
-
     [Header("Mesafe Ayarlarý")]
-    // X:0, Y:5, Z:-10 -> Daha yüksek ve daha geriden profesyonel bir bakýþ açýsý saðlar.
     public Vector3 offset = new Vector3(0f, 5f, -10f);
 
     [Header("Yumuþatma Ayarlarý")]
-    public float positionSmoothTime = 0.12f; // Virajlarda yolu hissetmek için biraz artýrdýk
+    public float positionSmoothTime = 0.12f;
     public float rotationSmoothSpeed = 6f;
 
-    private Vector3 currentVelocity = Vector3.zero;
+    private CarController carController;
+    private Vector3 currentVelocity;
     private Quaternion smoothedRotation;
 
     void Start()
@@ -31,24 +28,22 @@ public class CameraFollow : MonoBehaviour
     {
         if (target == null || carController == null) return;
 
-        // Araba scriptinden hazýr hesaplanmýþ yol yönünü alýyoruz
         Vector3 trackForward = carController.currentTrackForward;
 
-        // Yolun virajýna göre kameranýn durmasý gereken rotasyonu belirle
-        Quaternion trackRotation = Quaternion.LookRotation(trackForward, Vector3.up);
-        smoothedRotation = Quaternion.Slerp(smoothedRotation, trackRotation, rotationSmoothSpeed * Time.deltaTime);
+        // Frame rate'den baðýmsýz yumuþatma için deltaTime'ý 1'den çýkar
+        // Bu klasik Lerp frame rate baðýmlýlýðýný ortadan kaldýrýr
+        float t = 1f - Mathf.Pow(1f - (rotationSmoothSpeed * 0.1f), Time.deltaTime * 60f);
 
-        // --- KONUM HESAPLAMA ---
-        Vector3 desiredPosition = target.position + (smoothedRotation * offset);
+        Quaternion targetRotation = Quaternion.LookRotation(trackForward, Vector3.up);
+        smoothedRotation = Quaternion.Slerp(smoothedRotation, targetRotation, t);
 
-        // SmoothDamp kullanýmý sarsýntýlarý önler ve yüksek hýzlarda kamerayý dengeler
-        transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref currentVelocity, positionSmoothTime);
+        // Kamera pozisyonu: SmoothDamp yeterli, Slerp ile çakýþmasýn
+        Vector3 desiredPosition = target.position + smoothedRotation * offset;
+        transform.position = Vector3.SmoothDamp(
+            transform.position, desiredPosition, ref currentVelocity, positionSmoothTime);
 
-        // --- BAKIÞ MANTIÐI ---
-        // Arabanýn þeritteki ufak titremelerini görmemek için 6 birim önüne odaklanýyoruz
-        Vector3 lookAtPoint = target.position + trackForward * 6f;
-        Quaternion finalRotation = Quaternion.LookRotation(lookAtPoint - transform.position);
-
-        transform.rotation = Quaternion.Slerp(transform.rotation, finalRotation, rotationSmoothSpeed * Time.deltaTime);
+        // Bakýþ noktasý: arabanýn önüne odaklan, þerit titremelerini gizler
+        Vector3 lookAt = target.position + trackForward * 6f;
+        transform.rotation = Quaternion.LookRotation(lookAt - transform.position);
     }
 }

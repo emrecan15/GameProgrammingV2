@@ -498,8 +498,6 @@ MonoBehaviour:
   carSpawnPoint: {fileID: 1140826934}
   scoreText: {fileID: 59176174}
   coinText: {fileID: 1696309494}
-  currentScore: 0
-  totalCoins: 0
   scoreMultiplier: 1
 --- !u!4 &313180946
 Transform:
@@ -1351,26 +1349,32 @@ MonoBehaviour:
   - {fileID: 5397173380847203626, guid: 9ea1b211869c72f41a670e2ac0525657, type: 3}
   poolSizePerPrefab: 5
   obstacleRotationOffset: {x: 0, y: 0, z: 0}
-  coinPrefab: {fileID: 6954758372675618198, guid: 6a301d09debaf1e4a8d3e2657cc44a96, type: 3}
-  coinPoolSize: 1000
-  coinRotationOffset: {x: 0, y: 0, z: 0}
-  coinSpawnChance: 100
+  obstacleHeightOffset: 0
+  coinPrefab: {fileID: 3828344839509127815, guid: aae408897e8f17f44aff9515a6e81535, type: 3}
+  coinPoolSize: 30
+  coinRotationOffset: {x: 90, y: 0, z: 0}
+  coinHeightOffset: 0.5
+  coinSpawnChance: 60
   magnetPrefab: {fileID: 8050537342152234946, guid: 50e260f821baa56419af96b848301e5d, type: 3}
-  magnetPoolSize: 100
+  magnetPoolSize: 3
   magnetRotationOffset: {x: 0, y: 0, z: 0}
-  magnetSpawnChance: 25
+  magnetHeightOffset: 0.3
+  magnetSpawnChance: 5
   nitroPrefab: {fileID: 5225455176718880169, guid: 59fd80584945fc7448940995b97dab30, type: 3}
-  nitroPoolSize: 100
+  nitroPoolSize: 3
   nitroRotationOffset: {x: 0, y: 0, z: 0}
-  nitroSpawnChance: 25
+  nitroHeightOffset: 0.5
+  nitroSpawnChance: 5
   doubleCoinPrefab: {fileID: 5310963310368244162, guid: 84b95e80250efd2408969492c3002afd, type: 3}
-  doubleCoinPoolSize: 100
+  doubleCoinPoolSize: 3
   doubleCoinRotationOffset: {x: 0, y: 0, z: 0}
-  doubleCoinSpawnChance: 25
+  doubleCoinHeightOffset: 0.5
+  doubleCoinSpawnChance: 5
   shieldPrefab: {fileID: 8475833574052523601, guid: a1614f0cf649e3a4e894d20bda9008e7, type: 3}
-  shieldPoolSize: 100
+  shieldPoolSize: 3
   shieldRotationOffset: {x: 0, y: 0, z: 0}
-  shieldSpawnChance: 25
+  shieldHeightOffset: 0.5
+  shieldSpawnChance: 5
   playerCar: {fileID: 0}
   spawnDistanceAhead: 60
   laneDistance: 3.3

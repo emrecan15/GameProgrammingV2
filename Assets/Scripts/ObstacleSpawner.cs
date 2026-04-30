@@ -1,64 +1,82 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Splines; 
-using Unity.Mathematics;   
+using UnityEngine.Splines;
+using Unity.Mathematics;
 
 public class ObstacleSpawner : MonoBehaviour
 {
     [Header("Havuz Ayarları (Engeller)")]
     public GameObject[] obstaclePrefabs;
     public int poolSizePerPrefab = 5;
-    public Vector3 obstacleRotationOffset = new Vector3(0, 0, 0);
-    private List<List<GameObject>> poolList;
+    public Vector3 obstacleRotationOffset;
+    public float obstacleHeightOffset = 0f;
 
     [Header("Havuz Ayarları (Altın)")]
     public GameObject coinPrefab;
-    public int coinPoolSize = 30; // Sayı azaldığı için havuzu da küçülttük
-    public Vector3 coinRotationOffset = new Vector3(0, 0, 0);
-    private List<GameObject> coinPool;
+    public int coinPoolSize = 30;
+    public Vector3 coinRotationOffset;
+    public float coinHeightOffset = 0.5f;
     [Range(0f, 100f)] public float coinSpawnChance = 60f;
 
     [Header("Havuz Ayarları (Mıknatıs)")]
     public GameObject magnetPrefab;
-    public int magnetPoolSize = 3;
-    public Vector3 magnetRotationOffset = new Vector3(0, 0, 0);
-    private List<GameObject> magnetPool;
-    [Range(0f, 100f)] public float magnetSpawnChance = 5f;
+    public int magnetPoolSize = 1;
+    public Vector3 magnetRotationOffset;
+    public float magnetHeightOffset = 0.5f;
+    [Range(0f, 100f)] public float magnetSpawnChance = 25f;
 
     [Header("Havuz Ayarları (Nitro)")]
     public GameObject nitroPrefab;
-    public int nitroPoolSize = 3;
-    public Vector3 nitroRotationOffset = new Vector3(0, 0, 0);
-    private List<GameObject> nitroPool;
-    [Range(0f, 100f)] public float nitroSpawnChance = 5f;
+    public int nitroPoolSize = 1;
+    public Vector3 nitroRotationOffset;
+    public float nitroHeightOffset = 0.5f;
+    [Range(0f, 100f)] public float nitroSpawnChance = 25f;
 
     [Header("Havuz Ayarları (2x Altın)")]
-    public GameObject doubleCoinPrefab; 
-    public int doubleCoinPoolSize = 3;
-    public Vector3 doubleCoinRotationOffset = new Vector3(0, 0, 0);
-    private List<GameObject> doubleCoinPool;
-    [Range(0f, 100f)] public float doubleCoinSpawnChance = 5f;
+    public GameObject doubleCoinPrefab;
+    public int doubleCoinPoolSize = 1;
+    public Vector3 doubleCoinRotationOffset;
+    public float doubleCoinHeightOffset = 0.5f;
+    [Range(0f, 100f)] public float doubleCoinSpawnChance = 25f;
 
     [Header("Havuz Ayarları (Kalkan)")]
-    public GameObject shieldPrefab; 
-    public int shieldPoolSize = 3;
-    public Vector3 shieldRotationOffset = new Vector3(0, 0, 0);
-    private List<GameObject> shieldPool;
-    [Range(0f, 100f)] public float shieldSpawnChance = 5f;
+    public GameObject shieldPrefab;
+    public int shieldPoolSize = 1;
+    public Vector3 shieldRotationOffset;
+    public float shieldHeightOffset = 0.5f;
+    [Range(0f, 100f)] public float shieldSpawnChance = 25f;
 
-    [Header("Doğma Ayarları (Spline)")]
+    [Header("Doğma Ayarları")]
     public CarController playerCar;
-    public float spawnDistanceAhead = 60f; 
+    public float spawnDistanceAhead = 60f;
     public float laneDistance = 3.5f;
 
     [Header("Zorluk Ayarları")]
     public float spawnDistanceInterval = 25f;
-    public int minSpawnsBetweenPowerUps = 10; 
-    private int currentPowerUpCooldown = 0;
+    public int minSpawnsBetweenPowerUps = 4;
 
-    private float lastSpawnProgressDist;
     private SplineContainer spline;
-    private float cachedSplineLength; 
+    private float cachedSplineLength;
+
+    private List<List<GameObject>> obstaclePools;
+    private List<GameObject> coinPool;
+    private List<GameObject> magnetPool;
+    private List<GameObject> nitroPool;
+    private List<GameObject> doubleCoinPool;
+    private List<GameObject> shieldPool;
+
+    private float lastCarProgress;
+    private int splineLoopCount;
+    private float absoluteCarDistance;
+    private float lastSpawnDist;
+    private int currentPowerUpCooldown;
+
+    // Cleanup her frame değil, her N frame'de bir çalışır
+    private int cleanupFrameInterval = 10;
+    private int cleanupFrameCounter = 0;
+
+    private struct ActiveObject { public GameObject obj; }
+    private List<ActiveObject> activeSpawns = new List<ActiveObject>();
 
     void Start()
     {
@@ -72,21 +90,19 @@ public class ObstacleSpawner : MonoBehaviour
         {
             spline = playerCar.trackSpline;
             cachedSplineLength = spline.CalculateLength();
-            lastSpawnProgressDist = playerCar.progress * cachedSplineLength;
+            lastCarProgress = playerCar.progress;
+            absoluteCarDistance = lastCarProgress * cachedSplineLength;
+            lastSpawnDist = absoluteCarDistance;
         }
 
-        poolList = new List<List<GameObject>>();
-        if (obstaclePrefabs != null && obstaclePrefabs.Length > 0)
-        {
-            for (int i = 0; i < obstaclePrefabs.Length; i++)
-            {
-                if (obstaclePrefabs[i] != null) poolList.Add(CreatePool(obstaclePrefabs[i], poolSizePerPrefab));
-            }
-        }
+        obstaclePools = new List<List<GameObject>>();
+        if (obstaclePrefabs != null)
+            foreach (GameObject prefab in obstaclePrefabs)
+                obstaclePools.Add(CreatePool(prefab, poolSizePerPrefab));
 
         coinPool = CreatePool(coinPrefab, coinPoolSize);
         magnetPool = CreatePool(magnetPrefab, magnetPoolSize);
-        nitroPool = CreatePool(nitroPrefab, nitroPoolSize); 
+        nitroPool = CreatePool(nitroPrefab, nitroPoolSize);
         doubleCoinPool = CreatePool(doubleCoinPrefab, doubleCoinPoolSize);
         shieldPool = CreatePool(shieldPrefab, shieldPoolSize);
     }
@@ -95,7 +111,6 @@ public class ObstacleSpawner : MonoBehaviour
     {
         List<GameObject> pool = new List<GameObject>();
         if (prefab == null) return pool;
-
         for (int i = 0; i < size; i++)
         {
             GameObject obj = Instantiate(prefab);
@@ -108,124 +123,154 @@ public class ObstacleSpawner : MonoBehaviour
     void Update()
     {
         if (spline == null || playerCar == null) return;
-        float currentDist = playerCar.progress * cachedSplineLength;
-        if (currentDist - lastSpawnProgressDist >= spawnDistanceInterval)
+
+        float currentProgress = playerCar.progress;
+
+        if (lastCarProgress > 0.8f && currentProgress < 0.2f)
+            splineLoopCount++;
+
+        lastCarProgress = currentProgress;
+        absoluteCarDistance = (splineLoopCount + currentProgress) * cachedSplineLength;
+
+        if (absoluteCarDistance - lastSpawnDist >= spawnDistanceInterval)
         {
-            SpawnObstacleAndItems();
-            lastSpawnProgressDist = currentDist;
+            SpawnWave();
+            lastSpawnDist = absoluteCarDistance;
+        }
+
+        // Cleanup'ı her 10 frame'de bir çalıştır, her frame değil.
+        // 120 FPS'de saniyede 12 kez kontrol → yeterli, spike yok.
+        cleanupFrameCounter++;
+        if (cleanupFrameCounter >= cleanupFrameInterval)
+        {
+            cleanupFrameCounter = 0;
+            CleanupOldSpawns();
         }
     }
 
-    void SpawnObstacleAndItems()
+    void CleanupOldSpawns()
     {
-        float targetSpawnDist = (playerCar.progress * cachedSplineLength) + spawnDistanceAhead;
+        if (playerCar == null) return;
+        Vector3 carPos = playerCar.transform.position;
+        Vector3 carForward = playerCar.currentTrackForward;
+
+        for (int i = activeSpawns.Count - 1; i >= 0; i--)
+        {
+            ActiveObject entry = activeSpawns[i];
+
+            if (entry.obj == null || !entry.obj.activeInHierarchy)
+            {
+                activeSpawns.RemoveAt(i);
+                continue;
+            }
+
+            Vector3 toObject = entry.obj.transform.position - carPos;
+            if (Vector3.Dot(carForward, toObject) < -15f)
+            {
+                entry.obj.SetActive(false);
+                activeSpawns.RemoveAt(i);
+            }
+        }
+    }
+
+    void SpawnWave()
+    {
+        float targetSpawnDist = absoluteCarDistance + spawnDistanceAhead;
         float spawnProgress = (targetSpawnDist % cachedSplineLength) / cachedSplineLength;
 
-        float3 pos, forward, up;
-        spline.Evaluate(spawnProgress, out pos, out forward, out up);
-
+        spline.Evaluate(spawnProgress, out float3 pos, out float3 forward, out float3 up);
         forward = math.normalize(forward);
         up = math.normalize(up);
         float3 right = math.cross(up, forward);
 
         Quaternion baseRotation = Quaternion.LookRotation(forward, up);
-        List<int> availableLanes = new List<int> { 0, 1, 2 };
+        List<int> usedLanes = new List<int>();
 
-        bool shouldSpawnObstacle = !playerCar.isNitroActive || playerCar.isNitroEnding;
+        // ── POWER-UP ──────────────────────────────────────────────────────────
+        bool anyActive = playerCar.isMagnetActive || playerCar.isNitroActive
+                       || playerCar.isDoubleCoinActive || playerCar.isShieldActive;
 
-        if (poolList.Count > 0 && shouldSpawnObstacle)
+        if (!anyActive)
         {
-            int obstacleLane = UnityEngine.Random.Range(0, 3);
-            availableLanes.Remove(obstacleLane); 
-            int randomObstacleIndex = UnityEngine.Random.Range(0, poolList.Count);
-            
-            SpawnFromPool(poolList[randomObstacleIndex], obstacleLane, baseRotation, obstacleRotationOffset, pos, right);
+            if (currentPowerUpCooldown > 0)
+            {
+                currentPowerUpCooldown--;
+            }
+            else
+            {
+                float total = magnetSpawnChance + nitroSpawnChance + doubleCoinSpawnChance + shieldSpawnChance;
+                float roll = UnityEngine.Random.Range(0f, total);
+                int pLane = UnityEngine.Random.Range(0, 3);
+                bool spawned = false;
+
+                if (roll < magnetSpawnChance)
+                    spawned = PlaceObject(magnetPool, pLane, baseRotation, magnetRotationOffset, pos, right, up, magnetHeightOffset);
+                else if (roll < magnetSpawnChance + nitroSpawnChance)
+                    spawned = PlaceObject(nitroPool, pLane, baseRotation, nitroRotationOffset, pos, right, up, nitroHeightOffset);
+                else if (roll < magnetSpawnChance + nitroSpawnChance + doubleCoinSpawnChance)
+                    spawned = PlaceObject(doubleCoinPool, pLane, baseRotation, doubleCoinRotationOffset, pos, right, up, doubleCoinHeightOffset);
+                else
+                    spawned = PlaceObject(shieldPool, pLane, baseRotation, shieldRotationOffset, pos, right, up, shieldHeightOffset);
+
+                if (spawned)
+                {
+                    usedLanes.Add(pLane);
+                    currentPowerUpCooldown = minSpawnsBetweenPowerUps;
+                }
+            }
         }
 
-        // ARTIK SADECE TEK ALTIN ÇIKIYOR
-        if (coinPool.Count > 0 && UnityEngine.Random.Range(0f, 100f) <= coinSpawnChance && availableLanes.Count > 0)
+        // ── ENGEL ─────────────────────────────────────────────────────────────
+        bool spawnObstacle = !playerCar.isNitroActive && !playerCar.isNitroEnding
+                           && obstaclePools.Count > 0;
+
+        if (spawnObstacle)
         {
-            int randomIndex = UnityEngine.Random.Range(0, availableLanes.Count);
-            int coinLane = availableLanes[randomIndex];
-            availableLanes.Remove(coinLane); 
-            
-            SpawnSingleCoin(coinLane, spawnProgress, baseRotation);
+            List<int> obstacleLanes = new List<int> { 0, 1, 2 };
+            foreach (int l in usedLanes) obstacleLanes.Remove(l);
+            if (obstacleLanes.Count == 0) obstacleLanes = new List<int> { 0, 1, 2 };
+
+            int lane = obstacleLanes[UnityEngine.Random.Range(0, obstacleLanes.Count)];
+            int poolIndex = UnityEngine.Random.Range(0, obstaclePools.Count);
+            PlaceObject(obstaclePools[poolIndex], lane, baseRotation, obstacleRotationOffset, pos, right, up, obstacleHeightOffset);
+            if (!usedLanes.Contains(lane)) usedLanes.Add(lane);
         }
 
-        if (currentPowerUpCooldown > 0) currentPowerUpCooldown--;
-
-        if (availableLanes.Count > 0 && currentPowerUpCooldown <= 0)
+        // ── COIN ──────────────────────────────────────────────────────────────
+        if (coinPool.Count > 0 && UnityEngine.Random.Range(0f, 100f) <= coinSpawnChance)
         {
-            float powerUpRoll = UnityEngine.Random.Range(0f, 100f);
-            
-            if (magnetPool.Count > 0 && !playerCar.isMagnetActive && powerUpRoll <= magnetSpawnChance)
+            List<int> coinLanes = new List<int> { 0, 1, 2 };
+            foreach (int l in usedLanes) coinLanes.Remove(l);
+
+            if (coinLanes.Count > 0)
             {
-                SpawnFromPool(magnetPool, availableLanes[0], baseRotation, magnetRotationOffset, pos, right);
-                currentPowerUpCooldown = minSpawnsBetweenPowerUps;
-            }
-            else if (nitroPool.Count > 0 && !playerCar.isNitroActive && powerUpRoll <= (magnetSpawnChance + nitroSpawnChance))
-            {
-                SpawnFromPool(nitroPool, availableLanes[0], baseRotation, nitroRotationOffset, pos, right);
-                currentPowerUpCooldown = minSpawnsBetweenPowerUps;
-            }
-            else if (doubleCoinPool.Count > 0 && !playerCar.isDoubleCoinActive && powerUpRoll <= (magnetSpawnChance + nitroSpawnChance + doubleCoinSpawnChance))
-            {
-                SpawnFromPool(doubleCoinPool, availableLanes[0], baseRotation, doubleCoinRotationOffset, pos, right);
-                currentPowerUpCooldown = minSpawnsBetweenPowerUps;
-            }
-            else if (shieldPool.Count > 0 && !playerCar.isShieldActive && powerUpRoll <= (magnetSpawnChance + nitroSpawnChance + doubleCoinSpawnChance + shieldSpawnChance))
-            {
-                SpawnFromPool(shieldPool, availableLanes[0], baseRotation, shieldRotationOffset, pos, right);
-                currentPowerUpCooldown = minSpawnsBetweenPowerUps;
+                int lane = coinLanes[UnityEngine.Random.Range(0, coinLanes.Count)];
+                PlaceObject(coinPool, lane, baseRotation, coinRotationOffset, pos, right, up, coinHeightOffset);
             }
         }
     }
 
-    // DESENLERİ SİLDİK, YERİNE TEKLİ DOĞMA GELDİ
-    void SpawnSingleCoin(int lane, float progress, Quaternion baseRot)
+    bool PlaceObject(List<GameObject> pool, int lane, Quaternion baseRot, Vector3 rotOffset,
+                     float3 splinePos, float3 right, float3 up, float heightOffset)
     {
-        GameObject coin = GetPooledCoin();
-        if (coin == null) return;
-
-        float3 cPos, cForward, cUp;
-        spline.Evaluate(progress, out cPos, out cForward, out cUp);
-        float3 cRight = math.cross(math.normalize(cUp), math.normalize(cForward));
+        GameObject obj = GetPooled(pool);
+        if (obj == null) return false;
 
         float xPos = (lane - 1) * laneDistance;
-        float yOffset = coinPrefab.transform.position.y;
-        if (yOffset < 0.5f) yOffset = 0.5f;
+        Vector3 finalPos = (Vector3)splinePos + (Vector3)right * xPos + (Vector3)up * heightOffset;
 
-        Vector3 finalPos = (Vector3)cPos + ((Vector3)cRight * xPos);
-        finalPos.y += yOffset;
+        obj.transform.position = finalPos;
+        obj.transform.rotation = baseRot * Quaternion.Euler(rotOffset);
+        obj.SetActive(true);
 
-        coin.transform.position = finalPos;
-        coin.transform.rotation = baseRot * Quaternion.Euler(coinRotationOffset);
-        coin.SetActive(true);
+        activeSpawns.Add(new ActiveObject { obj = obj });
+        return true;
     }
 
-    GameObject GetPooledCoin()
+    GameObject GetPooled(List<GameObject> pool)
     {
-        foreach (GameObject obj in coinPool) if (!obj.activeInHierarchy) return obj;
-        return null;
-    }
-
-    GameObject SpawnFromPool(List<GameObject> pool, int lane, Quaternion baseRot, Vector3 rotOffset, float3 pos, float3 right)
-    {
-        if (pool == null || pool.Count == 0) return null;
         foreach (GameObject obj in pool)
-        {
-            if (!obj.activeInHierarchy)
-            {
-                float xPos = (lane - 1) * laneDistance;
-                float originalY = obj.transform.position.y;
-                Vector3 finalPos = (Vector3)pos + ((Vector3)right * xPos);
-                finalPos.y += originalY; 
-                obj.transform.position = finalPos;
-                obj.transform.rotation = baseRot * Quaternion.Euler(rotOffset);
-                obj.SetActive(true);
-                return obj; 
-            }
-        }
+            if (obj != null && !obj.activeInHierarchy) return obj;
         return null;
     }
 }

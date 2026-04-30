@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class Obstacle : MonoBehaviour
 {
+	/*
 	private Transform player;
 
 	void OnEnable()
@@ -26,4 +27,6 @@ public class Obstacle : MonoBehaviour
 			gameObject.SetActive(false);
 		}
 	}
+
+	*/
 }

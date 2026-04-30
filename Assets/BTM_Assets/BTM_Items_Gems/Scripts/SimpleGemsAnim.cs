@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections;
 
 namespace Benjathemaker
 {
@@ -9,45 +8,48 @@ namespace Benjathemaker
         public bool rotateX = false;
         public bool rotateY = false;
         public bool rotateZ = false;
-        public float rotationSpeed = 90f; // Degrees per second
+        public float rotationSpeed = 90f;
 
         public bool isFloating = false;
-        public bool useEasingForFloating = false; // Separate toggle for floating ease
-        public float floatHeight = 1f; // Max height displacement
+        public bool useEasingForFloating = false;
+        public float floatHeight = 1f;
         public float floatSpeed = 1f;
+
+        public Vector3 startScale = Vector3.one;
+        public Vector3 endScale = Vector3.one;
+        public bool isScaling = false;
+        public bool useEasingForScaling = false;
+        public float scaleLerpSpeed = 1f;
+
         private Vector3 initialPosition;
         private float floatTimer;
-
-        private Vector3 initialScale;
-        public Vector3 startScale;
-        public Vector3 endScale;
-
-        public bool isScaling = false;
-        public bool useEasingForScaling = false; // Separate toggle for scaling ease
-        public float scaleLerpSpeed = 1f; // Speed of scaling transition
         private float scaleTimer;
 
-        void Start()
-        {
-            initialScale = transform.localScale;
-            initialPosition = transform.position;
+        // Rotation vektörünü her frame new Vector3 ile yaratmak yerine bir kere sakla
+        private Vector3 rotationVector;
 
-            // Adjust start and end scale based on initial scale
-            startScale = initialScale;
-            endScale = initialScale * (endScale.magnitude / startScale.magnitude);
+        void Awake()
+        {
+            rotationVector = new Vector3(
+                rotateX ? 1 : 0,
+                rotateY ? 1 : 0,
+                rotateZ ? 1 : 0);
+        }
+
+        // OnEnable: SetActive(true) her çaðrýldýðýnda çalýþýr.
+        // Start sadece ilk seferde çalýþýr — pooling ile kullanýlan objelerde
+        // pozisyon/timer sýfýrlama için OnEnable þart.
+        void OnEnable()
+        {
+            initialPosition = transform.position;
+            floatTimer = 0f;
+            scaleTimer = 0f;
         }
 
         void Update()
         {
             if (isRotating)
-            {
-                Vector3 rotationVector = new Vector3(
-                    rotateX ? 1 : 0,
-                    rotateY ? 1 : 0,
-                    rotateZ ? 1 : 0
-                );
-                transform.Rotate(rotationVector * rotationSpeed * Time.deltaTime);
-            }
+                transform.Rotate(rotationVector * (rotationSpeed * Time.deltaTime));
 
             if (isFloating)
             {
@@ -55,27 +57,24 @@ namespace Benjathemaker
                 float t = Mathf.PingPong(floatTimer, 1f);
                 if (useEasingForFloating) t = EaseInOutQuad(t);
 
-                transform.position = initialPosition + new Vector3(0, t * floatHeight, 0);
+                // new Vector3 yerine direkt set — heap allocation yok
+                Vector3 pos = initialPosition;
+                pos.y += t * floatHeight;
+                transform.position = pos;
             }
 
             if (isScaling)
             {
                 scaleTimer += Time.deltaTime * scaleLerpSpeed;
-                float t = Mathf.PingPong(scaleTimer, 1f); // Oscillates between 0 and 1
-
-                if (useEasingForScaling)
-                {
-                    t = EaseInOutQuad(t);
-                }
-
+                float t = Mathf.PingPong(scaleTimer, 1f);
+                if (useEasingForScaling) t = EaseInOutQuad(t);
                 transform.localScale = Vector3.Lerp(startScale, endScale, t);
             }
         }
 
         float EaseInOutQuad(float t)
         {
-            return t < 0.5f ? 2 * t * t : 1 - Mathf.Pow(-2 * t + 2, 2) / 2;
+            return t < 0.5f ? 2f * t * t : 1f - Mathf.Pow(-2f * t + 2f, 2f) / 2f;
         }
     }
 }
-

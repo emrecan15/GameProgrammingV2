@@ -1,310 +1,283 @@
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Splines;
-using Unity.Mathematics;
 
 public class CarController : MonoBehaviour
 {
-	[Header("Efektler (SFX)")]
-	public AudioSource driftAudio;
+    [Header("Efektler (SFX)")]
+    public AudioSource driftAudio;
 
-	[Header("Spline Ayarları")]
-	public SplineContainer trackSpline;
-	[HideInInspector] public float progress = 0f;
+    [Header("Spline Ayarları")]
+    public SplineContainer trackSpline;
+    [HideInInspector] public float progress;
 
-	[Header("Hareket Ayarları")]
-	public float forwardSpeed = 25.0f;
-	public float maxSpeed = 100.0f;
-	public float acceleration = 0.5f;
+    [Header("Hareket Ayarları")]
+    public float forwardSpeed = 25f;
+    public float maxSpeed = 100f;
+    public float acceleration = 0.5f;
 
-	[Header("Şerit Ayarları")]
-	public float laneDistance = 3.0f;
-	public float laneChangeSmoothTime = 0.1f;
-	public float groundOffset = 0.2f;
+    [Header("Şerit Ayarları")]
+    public float laneDistance = 3f;
+    public float laneChangeSmoothTime = 0.1f;
+    public float groundOffset = 0.2f;
 
-	[Header("Görsel Dönüş")]
-	public float turnAngle = 15.0f;
-	public float turnSpeed = 15.0f;
+    [Header("Görsel Dönüş")]
+    public float turnAngle = 15f;
+    public float turnSpeed = 15f;
 
-	[Header("Güçlendiriciler (Mıknatıs)")]
-	[HideInInspector] public bool isMagnetActive = false;
-	public float magnetDuration = 10f;
-	public float magnetRadius = 25f;
-	public float magnetPullSpeed = 50f;
+    [Header("Güçlendirici: Mıknatıs")]
+    [HideInInspector] public bool isMagnetActive;
+    public float magnetDuration = 10f;
+    public float magnetRadius = 25f;
+    public float magnetPullSpeed = 50f;
 
-	[Header("Güçlendiriciler (Nitro)")]
-	[HideInInspector] public bool isNitroActive = false;
-	[HideInInspector] public bool isNitroEnding = false;
-	public float nitroDuration = 5f;
-	public float nitroSpeedMultiplier = 1.8f;
+    [Header("Güçlendirici: Nitro")]
+    [HideInInspector] public bool isNitroActive;
+    [HideInInspector] public bool isNitroEnding;
+    public float nitroDuration = 5f;
+    public float nitroSpeedMultiplier = 1.8f;
 
-	[Header("Güçlendiriciler (2x Altın)")]
-	[HideInInspector] public bool isDoubleCoinActive = false;
-	public float doubleCoinDuration = 10f; 
+    [Header("Güçlendirici: 2x Altın")]
+    [HideInInspector] public bool isDoubleCoinActive;
+    public float doubleCoinDuration = 10f;
 
-	[Header("Güçlendiriciler (Kalkan)")]
-	[HideInInspector] public bool isShieldActive = false;
-	public float shieldDuration = 15f; 
-	public GameObject shieldVisual; 
+    [Header("Güçlendirici: Kalkan")]
+    [HideInInspector] public bool isShieldActive;
+    public float shieldDuration = 15f;
+    public GameObject shieldVisual;
 
-	[HideInInspector] public Vector3 currentTrackForward;
-	[HideInInspector] public float publicXOffset;
+    [HideInInspector] public Vector3 currentTrackForward;
+    [HideInInspector] public float publicXOffset;
 
-	private int currentLane = 1;
-	private float currentXOffset = 0f;
-	private float xOffsetVelocity = 0f;
-	private float cachedSplineLength;
+    private int currentLane;
+    private float currentXOffset;
+    private float xOffsetVelocity;
+    private float cachedSplineLength;
+    private float baseForwardSpeed;
+    private bool isDead;
 
-	private bool isDead = false;
-	private float baseForwardSpeed;
+    private Coroutine magnetCoroutine;
+    private Coroutine nitroCoroutine;
+    private Coroutine doubleCoinCoroutine;
+    private Coroutine shieldCoroutine;
 
-	private Coroutine magnetCoroutine;
-	private Coroutine nitroCoroutine;
-	private Coroutine doubleCoinCoroutine;
-	private Coroutine shieldCoroutine;
+    void Awake()
+    {
+        if (driftAudio == null) driftAudio = GetComponent<AudioSource>();
 
-	void Awake()
-	{
-		if (driftAudio == null) driftAudio = GetComponent<AudioSource>();
+        if (trackSpline == null) trackSpline = FindFirstObjectByType<SplineContainer>();
+        if (trackSpline != null) cachedSplineLength = trackSpline.CalculateLength();
 
-		if (trackSpline == null) trackSpline = FindFirstObjectByType<SplineContainer>();
-		if (trackSpline != null) cachedSplineLength = trackSpline.CalculateLength();
+        RoadManager rm = FindFirstObjectByType<RoadManager>();
+        if (rm != null) rm.playerCar = this;
 
-		RoadManager rm = FindFirstObjectByType<RoadManager>();
-		if (rm != null) rm.playerCar = this;
+        ObstacleSpawner os = FindFirstObjectByType<ObstacleSpawner>();
+        if (os != null) os.playerCar = this;
 
-		ObstacleSpawner os = FindFirstObjectByType<ObstacleSpawner>();
-		if (os != null) os.playerCar = this;
+        CameraFollow cam = FindFirstObjectByType<CameraFollow>();
+        if (cam != null) cam.target = this.transform;
 
-		CameraFollow cam = FindFirstObjectByType<CameraFollow>();
-		if (cam != null) cam.target = this.transform;
+        currentLane = 1;
+        baseForwardSpeed = forwardSpeed;
 
-		baseForwardSpeed = forwardSpeed;
-		
-		if (shieldVisual != null) shieldVisual.SetActive(false);
-	}
-
-	void Start()
-	{
-        QualitySettings.vSyncCount = 0;
-        Application.targetFrameRate = 120;
+        if (shieldVisual != null) shieldVisual.SetActive(false);
     }
 
-	void Update()
-	{
-		if (isDead || trackSpline == null) return;
+    void Start()
+    {
+        Application.targetFrameRate = 120;
+        QualitySettings.vSyncCount = 0;
+    }
 
-		HandleSpeed();
-		HandleInput();
-		CalculateMovement();
-	}
+    void Update()
+    {
+        if (isDead || trackSpline == null) return;
 
-	void HandleSpeed()
-	{
-		if (baseForwardSpeed < maxSpeed)
-		{
-			baseForwardSpeed += acceleration * Time.deltaTime;
-		}
+        HandleSpeed();
+        HandleInput();
+        CalculateMovement();
+    }
 
-		if (isNitroActive)
-		{
-			float nitroTargetSpeed = maxSpeed * nitroSpeedMultiplier; 
-			forwardSpeed = Mathf.MoveTowards(forwardSpeed, nitroTargetSpeed, 60f * Time.deltaTime);
-		}
-		else
-		{
-			if (forwardSpeed > baseForwardSpeed)
-			{
-				forwardSpeed = Mathf.MoveTowards(forwardSpeed, baseForwardSpeed, 80f * Time.deltaTime);
-			}
-			else
-			{
-				forwardSpeed = baseForwardSpeed;
-			}
-		}
-	}
+    void HandleSpeed()
+    {
+        if (baseForwardSpeed < maxSpeed)
+            baseForwardSpeed += acceleration * Time.deltaTime;
 
-	void HandleInput()
-	{
-		if (Keyboard.current != null)
-		{
-			int previousLane = currentLane;
+        if (isNitroActive)
+        {
+            float nitroTarget = maxSpeed * nitroSpeedMultiplier;
+            forwardSpeed = Mathf.MoveTowards(forwardSpeed, nitroTarget, 60f * Time.deltaTime);
+        }
+        else if (forwardSpeed > baseForwardSpeed)
+        {
+            forwardSpeed = Mathf.MoveTowards(forwardSpeed, baseForwardSpeed, 80f * Time.deltaTime);
+        }
+        else
+        {
+            forwardSpeed = baseForwardSpeed;
+        }
+    }
 
-			if (Keyboard.current.rightArrowKey.wasPressedThisFrame || Keyboard.current.dKey.wasPressedThisFrame)
-				currentLane = Mathf.Min(2, currentLane + 1);
+    void HandleInput()
+    {
+        if (Keyboard.current == null) return;
 
-			if (Keyboard.current.leftArrowKey.wasPressedThisFrame || Keyboard.current.aKey.wasPressedThisFrame)
-				currentLane = Mathf.Max(0, currentLane - 1);
+        int prev = currentLane;
 
-			if (currentLane != previousLane)
-			{
-				PlayDriftEffects();
-			}
-		}
-	}
+        if (Keyboard.current.rightArrowKey.wasPressedThisFrame || Keyboard.current.dKey.wasPressedThisFrame)
+            currentLane = Mathf.Min(2, currentLane + 1);
 
-	private void PlayDriftEffects()
-	{
-		if (driftAudio != null) driftAudio.Play();
-	}
+        if (Keyboard.current.leftArrowKey.wasPressedThisFrame || Keyboard.current.aKey.wasPressedThisFrame)
+            currentLane = Mathf.Max(0, currentLane - 1);
 
-	void CalculateMovement()
-	{
-		progress += (forwardSpeed * Time.deltaTime) / cachedSplineLength;
-		progress = Mathf.Repeat(progress, 1f);
+        if (currentLane != prev && driftAudio != null)
+            driftAudio.Play();
+    }
 
-		float3 pos, forward, up;
-		trackSpline.Evaluate(progress, out pos, out forward, out up);
+    void CalculateMovement()
+    {
+        progress += (forwardSpeed * Time.deltaTime) / cachedSplineLength;
+        progress = Mathf.Repeat(progress, 1f);
 
-		forward = math.normalize(forward);
-		up = math.normalize(up);
-		float3 right = math.cross(up, forward);
+        trackSpline.Evaluate(progress, out float3 pos, out float3 forward, out float3 up);
+        forward = math.normalize(forward);
+        up = math.normalize(up);
+        float3 right = math.cross(up, forward);
 
-		currentTrackForward = (Vector3)forward;
-		publicXOffset = currentXOffset;
+        currentTrackForward = (Vector3)forward;
+        publicXOffset = currentXOffset;
 
-		float targetXOffset = (currentLane - 1) * laneDistance;
-		currentXOffset = Mathf.SmoothDamp(currentXOffset, targetXOffset, ref xOffsetVelocity, laneChangeSmoothTime);
+        float targetXOffset = (currentLane - 1) * laneDistance;
+        currentXOffset = Mathf.SmoothDamp(currentXOffset, targetXOffset, ref xOffsetVelocity, laneChangeSmoothTime);
 
-		Vector3 finalPosition = (Vector3)pos + ((Vector3)right * currentXOffset);
-		finalPosition += (Vector3)up * groundOffset;
+        transform.position = (Vector3)pos + (Vector3)right * currentXOffset + (Vector3)up * groundOffset;
 
-		transform.position = finalPosition;
+        float xDiff = targetXOffset - currentXOffset;
+        Quaternion baseRot = Quaternion.LookRotation(forward, up);
+        Quaternion turnRot = Quaternion.Euler(0, xDiff * turnAngle, 0);
+        transform.rotation = Quaternion.Lerp(transform.rotation, baseRot * turnRot, turnSpeed * Time.deltaTime);
+    }
 
-		float xDiff = targetXOffset - currentXOffset;
-		float targetRotationY = xDiff * turnAngle;
-		Quaternion baseRotation = Quaternion.LookRotation(forward, up);
-		Quaternion turnRotation = Quaternion.Euler(0, targetRotationY, 0);
-		transform.rotation = Quaternion.Lerp(transform.rotation, baseRotation * turnRotation, turnSpeed * Time.deltaTime);
-	}
+    void OnTriggerEnter(Collider other)
+    {
+        if (isDead) return;
 
-	private void OnTriggerEnter(Collider other)
-	{
-		if (isDead) return;
+        if (other.CompareTag("Obstacle"))
+        {
+            bool atNitroSpeed = forwardSpeed > (baseForwardSpeed + 5f);
 
-		if (other.CompareTag("Obstacle"))
-		{
-			bool isBrakingFromNitro = forwardSpeed > (baseForwardSpeed + 5f);
+            if (isNitroActive || atNitroSpeed)
+            {
+                other.gameObject.SetActive(false);
+            }
+            else if (isShieldActive)
+            {
+                isShieldActive = false;
+                if (shieldVisual != null) shieldVisual.SetActive(false);
+                if (shieldCoroutine != null) StopCoroutine(shieldCoroutine);
+                other.gameObject.SetActive(false);
+            }
+            else
+            {
+                isDead = true;
+                forwardSpeed = 0f;
+                if (GameManager.Instance != null) GameManager.Instance.GameOver();
+            }
+        }
+        else if (other.CompareTag("Coin"))
+        {
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.AddCoin();
+                if (isDoubleCoinActive) GameManager.Instance.AddCoin();
+            }
+            other.gameObject.SetActive(false);
+        }
+        else if (other.CompareTag("Magnet"))
+        {
+            if (magnetCoroutine != null) StopCoroutine(magnetCoroutine);
+            magnetCoroutine = StartCoroutine(MagnetRoutine());
+            other.gameObject.SetActive(false);
+        }
+        else if (other.CompareTag("Nitro"))
+        {
+            if (nitroCoroutine != null) StopCoroutine(nitroCoroutine);
+            nitroCoroutine = StartCoroutine(NitroRoutine());
+            other.gameObject.SetActive(false);
+        }
+        else if (other.CompareTag("DoubleCoin"))
+        {
+            if (doubleCoinCoroutine != null) StopCoroutine(doubleCoinCoroutine);
+            doubleCoinCoroutine = StartCoroutine(DoubleCoinRoutine());
+            other.gameObject.SetActive(false);
+        }
+        else if (other.CompareTag("Shield"))
+        {
+            if (shieldCoroutine != null) StopCoroutine(shieldCoroutine);
+            shieldCoroutine = StartCoroutine(ShieldRoutine());
+            other.gameObject.SetActive(false);
+        }
+    }
 
-			if (isNitroActive || isBrakingFromNitro)
-			{
-				other.gameObject.SetActive(false);
-			}
-			else if (isShieldActive)
-			{
-				isShieldActive = false;
-				if (shieldVisual != null) shieldVisual.SetActive(false); 
-				if (shieldCoroutine != null) StopCoroutine(shieldCoroutine); 
-				other.gameObject.SetActive(false); 
-			}
-			else
-			{
-				isDead = true;
-				forwardSpeed = 0;
-				if (GameManager.Instance != null) GameManager.Instance.GameOver();
-			}
-		}
-		else if (other.CompareTag("Coin"))
-		{
-			if (GameManager.Instance != null)
-			{
-				GameManager.Instance.AddCoin();
-				if (isDoubleCoinActive) GameManager.Instance.AddCoin();
-			}
-			other.gameObject.SetActive(false);
-		}
-		else if (other.CompareTag("Magnet"))
-		{
-			if (magnetCoroutine != null) StopCoroutine(magnetCoroutine);
-			magnetCoroutine = StartCoroutine(MagnetRoutine());
-			other.gameObject.SetActive(false);
-		}
-		else if (other.CompareTag("Nitro"))
-		{
-			if (nitroCoroutine != null) StopCoroutine(nitroCoroutine);
-			nitroCoroutine = StartCoroutine(NitroRoutine());
-			other.gameObject.SetActive(false);
-		}
-		else if (other.CompareTag("DoubleCoin"))
-		{
-			if (doubleCoinCoroutine != null) StopCoroutine(doubleCoinCoroutine);
-			doubleCoinCoroutine = StartCoroutine(DoubleCoinRoutine());
-			other.gameObject.SetActive(false);
-		}
-		else if (other.CompareTag("Shield"))
-		{
-			if (shieldCoroutine != null) StopCoroutine(shieldCoroutine);
-			shieldCoroutine = StartCoroutine(ShieldRoutine());
-			other.gameObject.SetActive(false);
-		}
-	}
+    private System.Collections.IEnumerator MagnetRoutine()
+    {
+        isMagnetActive = true;
+        yield return new WaitForSeconds(magnetDuration);
+        isMagnetActive = false;
+    }
 
-	private System.Collections.IEnumerator MagnetRoutine()
-	{
-		isMagnetActive = true;
-		yield return new WaitForSeconds(magnetDuration);
-		isMagnetActive = false;
-	}
+    private System.Collections.IEnumerator NitroRoutine()
+    {
+        isNitroActive = true;
+        isNitroEnding = false;
 
-	private System.Collections.IEnumerator NitroRoutine()
-	{
-		isNitroActive = true;
-		isNitroEnding = false;
+        // Nitro aktifken ObstacleSpawner zaten engel spawn etmiyor.
+        // FindGameObjectsWithTag tüm sahneyi taradığı için an'lık spike yaratır, kaldırıldı.
 
-		GameObject[] activeObstacles = GameObject.FindGameObjectsWithTag("Obstacle");
-		foreach (GameObject obs in activeObstacles)
-		{
-			obs.SetActive(false);
-		}
+        float timer = nitroDuration;
+        while (timer > 0f)
+        {
+            timer -= Time.deltaTime;
+            if (timer <= 2f && !isNitroEnding) isNitroEnding = true;
+            yield return null;
+        }
 
-		float timer = nitroDuration;
-		while (timer > 0)
-		{
-			timer -= Time.deltaTime;
-			if (timer <= 2.0f && !isNitroEnding) isNitroEnding = true;
-			yield return null;
-		}
+        isNitroActive = false;
+        isNitroEnding = false;
+    }
 
-		isNitroActive = false;
-		isNitroEnding = false;
-	}
+    private System.Collections.IEnumerator DoubleCoinRoutine()
+    {
+        isDoubleCoinActive = true;
+        yield return new WaitForSeconds(doubleCoinDuration);
+        isDoubleCoinActive = false;
+    }
 
-	private System.Collections.IEnumerator DoubleCoinRoutine()
-	{
-		isDoubleCoinActive = true;
-		yield return new WaitForSeconds(doubleCoinDuration);
-		isDoubleCoinActive = false;
-	}
+    private System.Collections.IEnumerator ShieldRoutine()
+    {
+        isShieldActive = true;
+        if (shieldVisual != null) shieldVisual.SetActive(true);
 
-	// YENİDEN YAZILAN KALKAN FONKSİYONU
-	private System.Collections.IEnumerator ShieldRoutine()
-	{
-		isShieldActive = true;
-		if (shieldVisual != null) shieldVisual.SetActive(true);
+        BlinkVisual blinker = shieldVisual != null ? shieldVisual.GetComponent<BlinkVisual>() : null;
+        bool blinkStarted = false;
+        float timer = shieldDuration;
 
-		// Yanıp sönme kodunu al
-		BlinkVisual blinker = shieldVisual.GetComponent<BlinkVisual>();
+        while (timer > 0f)
+        {
+            timer -= Time.deltaTime;
 
-		float timer = shieldDuration;
-		bool blinkingStarted = false;
+            if (timer <= 3f && !blinkStarted)
+            {
+                blinkStarted = true;
+                if (blinker != null) blinker.StartBlinking();
+            }
 
-		while (timer > 0)
-		{
-			timer -= Time.deltaTime;
+            yield return null;
+        }
 
-			// Son 3 saniye kala yanıp sönmeyi başlat
-			if (timer <= 3.0f && !blinkingStarted)
-			{
-				blinkingStarted = true;
-				if (blinker != null) blinker.StartBlinking();
-			}
-
-			yield return null;
-		}
-
-		// Süre bittiğinde kalkanı kapat ve yanıp sönmeyi durdur
-		isShieldActive = false;
-		if (blinker != null) blinker.StopBlinking();
-		if (shieldVisual != null) shieldVisual.SetActive(false);
-	}
+        isShieldActive = false;
+        if (blinker != null) blinker.StopBlinking();
+        if (shieldVisual != null) shieldVisual.SetActive(false);
+    }
 }
