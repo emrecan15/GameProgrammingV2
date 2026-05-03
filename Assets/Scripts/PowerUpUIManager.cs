@@ -82,7 +82,7 @@ public class PowerUpUIManager : MonoBehaviour
         if (speedText != null)
         {
             // Unity'nin hýzýný (m/s) gerçekçi KM/H birimine çeviriyoruz (x 3.6)
-            int kmh = Mathf.RoundToInt(currentSpeed * 3.6f);
+            int kmh = Mathf.RoundToInt(currentSpeed * 2.7f);
             speedText.text = kmh.ToString();
         }
     }

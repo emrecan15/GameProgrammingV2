@@ -71,6 +71,8 @@ public class ObstacleSpawner : MonoBehaviour
     private float lastSpawnDist;
     private int currentPowerUpCooldown;
 
+    private int lastObstaclePoolIndex = -1; // YENİ: Peşpeşe aynı aracı engellemek için hafıza
+
     private int cleanupFrameInterval = 10;
     private int cleanupFrameCounter = 0;
 
@@ -229,15 +231,23 @@ public class ObstacleSpawner : MonoBehaviour
 
             int lane = obstacleLanes[UnityEngine.Random.Range(0, obstacleLanes.Count)];
             int poolIndex = UnityEngine.Random.Range(0, obstaclePools.Count);
-            
+
+            // YENİ EKLENEN KISIM: Peşpeşe aynı aracın gelmesini engeller
+            if (obstaclePools.Count > 1 && poolIndex == lastObstaclePoolIndex)
+            {
+                // Eğer rastgelelik yine bir önceki aracı seçtiyse, zorla bir sonrakine geç
+                poolIndex = (poolIndex + 1) % obstaclePools.Count;
+            }
+            lastObstaclePoolIndex = poolIndex; // Hafızayı güncelle
+
             GameObject spawnedObstacle = PlaceObject(obstaclePools[poolIndex], lane, baseRotation, obstacleRotationOffset, pos, right, up, obstacleHeightOffset);
-            
+
             // EĞER NİTRO BİTİYORSA YANIP SÖNDÜR
             if (spawnedObstacle != null && playerCar.isNitroEnding)
             {
                 BlinkEffect blinker = spawnedObstacle.GetComponent<BlinkEffect>();
-                if (blinker == null) blinker = spawnedObstacle.AddComponent<BlinkEffect>(); 
-                blinker.StartBlinking(2.0f); 
+                if (blinker == null) blinker = spawnedObstacle.AddComponent<BlinkEffect>();
+                blinker.StartBlinking(2.0f);
             }
 
             if (!usedLanes.Contains(lane)) usedLanes.Add(lane);
@@ -303,21 +313,21 @@ public class BlinkEffect : MonoBehaviour
         {
             timer += Time.deltaTime;
             bool isVisible = Mathf.PingPong(Time.time * 15f, 1f) > 0.5f;
-            foreach(MeshRenderer mr in renderers) mr.enabled = isVisible;
-            if (timer >= blinkDuration) foreach(MeshRenderer mr in renderers) mr.enabled = true;
+            foreach (MeshRenderer mr in renderers) mr.enabled = isVisible;
+            if (timer >= blinkDuration) foreach (MeshRenderer mr in renderers) mr.enabled = true;
         }
     }
 
     // DÜZELTİLEN KISIM BURASI
     void OnDisable()
     {
-        if (renderers != null) 
+        if (renderers != null)
         {
-            foreach(MeshRenderer mr in renderers) mr.enabled = true;
+            foreach (MeshRenderer mr in renderers) mr.enabled = true;
         }
-        
+
         // Obje ekrandan çıkıp havuza döndüğünde sayacı dolu gösteriyoruz.
         // Böylece ileride normal bir engel olarak doğduğunda yarım kalan yanıp sönmeye devam etmeyecek!
-        timer = blinkDuration; 
+        timer = blinkDuration;
     }
 }

@@ -669,6 +669,9 @@ MonoBehaviour:
   mainCamera: {fileID: 0}
   obstacleSpawner: {fileID: 0}
   carPrefabs:
+  - {fileID: 8897385220444437716, guid: 0695d4c10b628d54f8fc1897412db770, type: 3}
+  - {fileID: 8428935501198086386, guid: 9cf78b2bb6c76a74dbc71c9aa2291759, type: 3}
+  - {fileID: 6183048251904429594, guid: 67792ba0b35018a48b408596680d69cd, type: 3}
   - {fileID: 28065713775905456, guid: b8245b838bce123468ef7a13000a556d, type: 3}
   - {fileID: 28065713775905456, guid: 1d7b30eda1beaf4429fddb89c8d72afa, type: 3}
   - {fileID: 28065713775905456, guid: a7326fa66a8d3ce449348279309c1393, type: 3}
@@ -1798,31 +1801,34 @@ MonoBehaviour:
   - {fileID: 463159973256271452, guid: 1f98b0fb92c6f184b81db205653ab19c, type: 3}
   - {fileID: 7118762931400538822, guid: 3201962d4d6aec94fbfe2d6cc7a9a2d1, type: 3}
   - {fileID: 5397173380847203626, guid: 9ea1b211869c72f41a670e2ac0525657, type: 3}
-  poolSizePerPrefab: 5
+  - {fileID: 793685457875359081, guid: 9c92406c14c380849bca38280c133c64, type: 3}
+  - {fileID: 3786326439804512758, guid: f4e73d783d681e04ca355f6c8a50af8e, type: 3}
+  - {fileID: 3859950695711406603, guid: eb1d6cef4963f9948a2d46b477134dfb, type: 3}
+  poolSizePerPrefab: 3
   obstacleRotationOffset: {x: 0, y: 0, z: 0}
   obstacleHeightOffset: 0
-  coinPrefab: {fileID: 3828344839509127815, guid: aae408897e8f17f44aff9515a6e81535, type: 3}
+  coinPrefab: {fileID: 6954758372675618198, guid: 6a301d09debaf1e4a8d3e2657cc44a96, type: 3}
   coinPoolSize: 30
-  coinRotationOffset: {x: 90, y: 0, z: 0}
+  coinRotationOffset: {x: 0, y: 0, z: 0}
   coinHeightOffset: 0.5
   coinSpawnChance: 60
   magnetPrefab: {fileID: 8050537342152234946, guid: 50e260f821baa56419af96b848301e5d, type: 3}
-  magnetPoolSize: 3
+  magnetPoolSize: 1
   magnetRotationOffset: {x: 0, y: 0, z: 0}
   magnetHeightOffset: 0.3
   magnetSpawnChance: 5
-  nitroPrefab: {fileID: 5225455176718880169, guid: 59fd80584945fc7448940995b97dab30, type: 3}
-  nitroPoolSize: 3
+  nitroPrefab: {fileID: 5225455176718880169, guid: 6a5f50369a5b5964aa76dc140165b539, type: 3}
+  nitroPoolSize: 1
   nitroRotationOffset: {x: 0, y: 0, z: 0}
   nitroHeightOffset: 0.5
   nitroSpawnChance: 5
   doubleCoinPrefab: {fileID: 5310963310368244162, guid: 84b95e80250efd2408969492c3002afd, type: 3}
-  doubleCoinPoolSize: 3
+  doubleCoinPoolSize: 1
   doubleCoinRotationOffset: {x: 0, y: 0, z: 0}
   doubleCoinHeightOffset: 0.5
   doubleCoinSpawnChance: 5
   shieldPrefab: {fileID: 8475833574052523601, guid: a1614f0cf649e3a4e894d20bda9008e7, type: 3}
-  shieldPoolSize: 3
+  shieldPoolSize: 1
   shieldRotationOffset: {x: 0, y: 0, z: 0}
   shieldHeightOffset: 0.5
   shieldSpawnChance: 5

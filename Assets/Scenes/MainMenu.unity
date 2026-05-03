@@ -6132,8 +6132,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShopManager
   allCars:
-  - carName: Sport Car (White)
+  - carName: 'Starter Car '
     price: 0
+    carIcon: {fileID: 21300000, guid: 4dcb17eb6b3bf63438895581619b51b3, type: 3}
+  - carName: Starter Car 2
+    price: 1
+    carIcon: {fileID: 21300000, guid: 568f6dc2b29cd1a43bd139bbbde86971, type: 3}
+  - carName: Racing Car
+    price: 1
+    carIcon: {fileID: 21300000, guid: 5de12ec4aa9d18249a65fa8d4d25c485, type: 3}
+  - carName: Sport Car (White)
+    price: 1
     carIcon: {fileID: 21300000, guid: 3269aecb2876cf640ae73f7bc3af9a47, type: 3}
   - carName: Sport Car(Black)
     price: 100
