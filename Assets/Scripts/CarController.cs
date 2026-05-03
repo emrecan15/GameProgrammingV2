@@ -176,12 +176,24 @@ public class CarController : MonoBehaviour
                 isShieldActive = false;
                 if (shieldVisual != null) shieldVisual.SetActive(false);
                 if (shieldCoroutine != null) StopCoroutine(shieldCoroutine);
+
+                if (PowerUpUIManager.Instance != null) PowerUpUIManager.Instance.HidePowerUp("Shield");
+
                 other.gameObject.SetActive(false);
             }
             else
             {
                 isDead = true;
                 forwardSpeed = 0f;
+
+                // KAZA ANI: Arka planda saymaya devam eden tüm süreleri durdur ve UI'ı temizle!
+                if (magnetCoroutine != null) StopCoroutine(magnetCoroutine);
+                if (nitroCoroutine != null) StopCoroutine(nitroCoroutine);
+                if (doubleCoinCoroutine != null) StopCoroutine(doubleCoinCoroutine);
+                if (shieldCoroutine != null) StopCoroutine(shieldCoroutine);
+
+                if (PowerUpUIManager.Instance != null) PowerUpUIManager.Instance.HideAll();
+
                 if (GameManager.Instance != null) GameManager.Instance.GameOver();
             }
         }
@@ -223,21 +235,37 @@ public class CarController : MonoBehaviour
     private System.Collections.IEnumerator MagnetRoutine()
     {
         isMagnetActive = true;
-        yield return new WaitForSeconds(magnetDuration);
+        if (PowerUpUIManager.Instance != null) PowerUpUIManager.Instance.ShowPowerUp("Magnet");
+
+        float timer = magnetDuration;
+        while (timer > 0f)
+        {
+            if (PowerUpUIManager.Instance != null)
+                PowerUpUIManager.Instance.UpdateTimer("Magnet", Mathf.CeilToInt(timer));
+
+            timer -= Time.deltaTime;
+            yield return null;
+        }
+
         isMagnetActive = false;
+        if (PowerUpUIManager.Instance != null) PowerUpUIManager.Instance.HidePowerUp("Magnet");
     }
 
     private System.Collections.IEnumerator NitroRoutine()
     {
         isNitroActive = true;
         isNitroEnding = false;
+        if (PowerUpUIManager.Instance != null) PowerUpUIManager.Instance.ShowPowerUp("Nitro");
 
-        // Nitro aktifken ObstacleSpawner zaten engel spawn etmiyor.
-        // FindGameObjectsWithTag tüm sahneyi taradığı için an'lık spike yaratır, kaldırıldı.
+        foreach (GameObject obs in GameObject.FindGameObjectsWithTag("Obstacle"))
+            obs.SetActive(false);
 
         float timer = nitroDuration;
         while (timer > 0f)
         {
+            if (PowerUpUIManager.Instance != null)
+                PowerUpUIManager.Instance.UpdateTimer("Nitro", Mathf.CeilToInt(timer));
+
             timer -= Time.deltaTime;
             if (timer <= 2f && !isNitroEnding) isNitroEnding = true;
             yield return null;
@@ -245,19 +273,33 @@ public class CarController : MonoBehaviour
 
         isNitroActive = false;
         isNitroEnding = false;
+        if (PowerUpUIManager.Instance != null) PowerUpUIManager.Instance.HidePowerUp("Nitro");
     }
 
     private System.Collections.IEnumerator DoubleCoinRoutine()
     {
         isDoubleCoinActive = true;
-        yield return new WaitForSeconds(doubleCoinDuration);
+        if (PowerUpUIManager.Instance != null) PowerUpUIManager.Instance.ShowPowerUp("DoubleCoin");
+
+        float timer = doubleCoinDuration;
+        while (timer > 0f)
+        {
+            if (PowerUpUIManager.Instance != null)
+                PowerUpUIManager.Instance.UpdateTimer("DoubleCoin", Mathf.CeilToInt(timer));
+
+            timer -= Time.deltaTime;
+            yield return null;
+        }
+
         isDoubleCoinActive = false;
+        if (PowerUpUIManager.Instance != null) PowerUpUIManager.Instance.HidePowerUp("DoubleCoin");
     }
 
     private System.Collections.IEnumerator ShieldRoutine()
     {
         isShieldActive = true;
         if (shieldVisual != null) shieldVisual.SetActive(true);
+        if (PowerUpUIManager.Instance != null) PowerUpUIManager.Instance.ShowPowerUp("Shield");
 
         BlinkVisual blinker = shieldVisual != null ? shieldVisual.GetComponent<BlinkVisual>() : null;
         bool blinkStarted = false;
@@ -265,6 +307,9 @@ public class CarController : MonoBehaviour
 
         while (timer > 0f)
         {
+            if (PowerUpUIManager.Instance != null)
+                PowerUpUIManager.Instance.UpdateTimer("Shield", Mathf.CeilToInt(timer));
+
             timer -= Time.deltaTime;
 
             if (timer <= 3f && !blinkStarted)
@@ -279,5 +324,6 @@ public class CarController : MonoBehaviour
         isShieldActive = false;
         if (blinker != null) blinker.StopBlinking();
         if (shieldVisual != null) shieldVisual.SetActive(false);
+        if (PowerUpUIManager.Instance != null) PowerUpUIManager.Instance.HidePowerUp("Shield");
     }
 }
