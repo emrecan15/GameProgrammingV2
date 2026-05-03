@@ -17,6 +17,16 @@ public class PowerUpUIManager : MonoBehaviour
     public GameObject shieldPanel;
     public TextMeshProUGUI shieldText;
 
+    
+
+
+    [Header("Araç Göstergeleri (Dashboard)")]
+    public GameObject distancePanel;
+    public GameObject speedPanel;
+
+    public TextMeshProUGUI distanceText; // KM için
+    public TextMeshProUGUI speedText;    // KM/H için
+
     void Awake()
     {
         if (Instance == null) Instance = this;
@@ -55,6 +65,24 @@ public class PowerUpUIManager : MonoBehaviour
             case "Nitro": if (nitroText) nitroText.text = secondsLeft.ToString() + "s"; break;
             case "DoubleCoin": if (doubleCoinText) doubleCoinText.text = secondsLeft.ToString() + "s"; break;
             case "Shield": if (shieldText) shieldText.text = secondsLeft.ToString() + "s"; break;
+        }
+    }
+
+    // YENÝ: KM ve KM/H hesaplayýp UI'a yazdýran fonksiyon
+    public void UpdateDashboard(float totalDistanceMeters, float currentSpeed)
+    {
+        if (distanceText != null)
+        {
+            // Metreyi KM'ye çevirip virgülden sonra 1 basamak gösteriyoruz (Örn: 1.2 KM)
+            float km = totalDistanceMeters / 1000f;
+            distanceText.text = km.ToString("F1");
+        }
+
+        if (speedText != null)
+        {
+            // Unity'nin hýzýný (m/s) gerçekçi KM/H birimine çeviriyoruz (x 3.6)
+            int kmh = Mathf.RoundToInt(currentSpeed * 3.6f);
+            speedText.text = kmh.ToString();
         }
     }
 

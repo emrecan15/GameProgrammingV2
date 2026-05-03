@@ -57,6 +57,8 @@ public class CarController : MonoBehaviour
     private float baseForwardSpeed;
     private bool isDead;
 
+    private float totalDistanceTraveled; // YENİ: Toplam gidilen mesafeyi tutar
+
     private Coroutine magnetCoroutine;
     private Coroutine nitroCoroutine;
     private Coroutine doubleCoinCoroutine;
@@ -88,6 +90,8 @@ public class CarController : MonoBehaviour
     {
         Application.targetFrameRate = 120;
         QualitySettings.vSyncCount = 0;
+
+        totalDistanceTraveled = 0f; // YENİ: Oyun başlarken mesafe sıfırlanır
     }
 
     void Update()
@@ -97,6 +101,12 @@ public class CarController : MonoBehaviour
         HandleSpeed();
         HandleInput();
         CalculateMovement();
+
+        // YENİ: UI'a güncel hızı ve toplam kat edilen mesafeyi gönder
+        if (PowerUpUIManager.Instance != null)
+        {
+            PowerUpUIManager.Instance.UpdateDashboard(totalDistanceTraveled, forwardSpeed);
+        }
     }
 
     void HandleSpeed()
@@ -137,7 +147,11 @@ public class CarController : MonoBehaviour
 
     void CalculateMovement()
     {
-        progress += (forwardSpeed * Time.deltaTime) / cachedSplineLength;
+        // YENİ: Bu frame'de ne kadar ilerlediğimizi hesaplayıp toplam mesafeye ekliyoruz
+        float moveDistance = forwardSpeed * Time.deltaTime;
+        totalDistanceTraveled += moveDistance;
+
+        progress += moveDistance / cachedSplineLength; // İlerlemeyi de bu hesaplanan değerle güncelliyoruz
         progress = Mathf.Repeat(progress, 1f);
 
         trackSpline.Evaluate(progress, out float3 pos, out float3 forward, out float3 up);
@@ -186,7 +200,6 @@ public class CarController : MonoBehaviour
                 isDead = true;
                 forwardSpeed = 0f;
 
-                // KAZA ANI: Arka planda saymaya devam eden tüm süreleri durdur ve UI'ı temizle!
                 if (magnetCoroutine != null) StopCoroutine(magnetCoroutine);
                 if (nitroCoroutine != null) StopCoroutine(nitroCoroutine);
                 if (doubleCoinCoroutine != null) StopCoroutine(doubleCoinCoroutine);

@@ -477,7 +477,7 @@ MonoBehaviour:
   magnetPullSpeed: 200
   isNitroActive: 0
   isNitroEnding: 0
-  nitroDuration: 10
+  nitroDuration: 5
   nitroSpeedMultiplier: 1.5
   isDoubleCoinActive: 0
   doubleCoinDuration: 10
