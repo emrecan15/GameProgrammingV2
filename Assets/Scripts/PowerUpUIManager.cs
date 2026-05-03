@@ -17,9 +17,6 @@ public class PowerUpUIManager : MonoBehaviour
     public GameObject shieldPanel;
     public TextMeshProUGUI shieldText;
 
-    
-
-
     [Header("Araç Göstergeleri (Dashboard)")]
     public GameObject distancePanel;
     public GameObject speedPanel;
@@ -71,6 +68,10 @@ public class PowerUpUIManager : MonoBehaviour
     // YENÝ: KM ve KM/H hesaplayýp UI'a yazdýran fonksiyon
     public void UpdateDashboard(float totalDistanceMeters, float currentSpeed)
     {
+        // Kaza sonrasý yeniden baþlarken veya oyun ilk açýldýðýnda paneller kapalýysa otomatik aç
+        if (distancePanel != null && !distancePanel.activeSelf) distancePanel.SetActive(true);
+        if (speedPanel != null && !speedPanel.activeSelf) speedPanel.SetActive(true);
+
         if (distanceText != null)
         {
             // Metreyi KM'ye çevirip virgülden sonra 1 basamak gösteriyoruz (Örn: 1.2 KM)
@@ -93,5 +94,9 @@ public class PowerUpUIManager : MonoBehaviour
         if (nitroPanel) nitroPanel.SetActive(false);
         if (doubleCoinPanel) doubleCoinPanel.SetActive(false);
         if (shieldPanel) shieldPanel.SetActive(false);
+
+        // Kaza anýnda Dashboard panelleri de kapanýyor
+        if (distancePanel) distancePanel.SetActive(false);
+        if (speedPanel) speedPanel.SetActive(false);
     }
 }
