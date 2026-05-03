@@ -288,7 +288,7 @@ MonoBehaviour:
   trackSpline: {fileID: 869984760}
   playerCar: {fileID: 0}
   roadPrefabs:
-  - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
+  - {fileID: 4775358128559842662, guid: 80a04bcbd31ec7a4e9ca629fd50f3b0d, type: 3}
   - {fileID: 4775358128559842662, guid: 561a8e2288dc87240807c59bbf2664a4, type: 3}
   - {fileID: 4775358128559842662, guid: ab721de900964d446b8caac97b9bf001, type: 3}
   - {fileID: 4775358128559842662, guid: def072b4b6ce60845a66c762b1282355, type: 3}
@@ -300,6 +300,10 @@ MonoBehaviour:
   - {fileID: 4775358128559842662, guid: 2acf5cfe123f9ad4fbb2493e45f56cbd, type: 3}
   - {fileID: 4775358128559842662, guid: 7c6ecef490a07934b928dd56b7703d7e, type: 3}
   - {fileID: 4775358128559842662, guid: 7eab159651a507f489467621641b3b1c, type: 3}
+  - {fileID: 4775358128559842662, guid: 2f3a7b76db4df2046b1d2a231f33d240, type: 3}
+  - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
+  - {fileID: 4775358128559842662, guid: 1a79825f763e8df498a8df83771a467a, type: 3}
+  - {fileID: 4775358128559842662, guid: b46d178afe517c34d9347dac95defb3d, type: 3}
   roadLength: 30
   amountOfRoadsOnScreen: 7
   tunnelStartPrefab: {fileID: 4775358128559842662, guid: ed25645ed113e1b4ea1f521ed101b152, type: 3}
