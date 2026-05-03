@@ -71,7 +71,6 @@ public class ObstacleSpawner : MonoBehaviour
     private float lastSpawnDist;
     private int currentPowerUpCooldown;
 
-    // Cleanup her frame değil, her N frame'de bir çalışır
     private int cleanupFrameInterval = 10;
     private int cleanupFrameCounter = 0;
 
@@ -138,8 +137,6 @@ public class ObstacleSpawner : MonoBehaviour
             lastSpawnDist = absoluteCarDistance;
         }
 
-        // Cleanup'ı her 10 frame'de bir çalıştır, her frame değil.
-        // 120 FPS'de saniyede 12 kez kontrol → yeterli, spike yok.
         cleanupFrameCounter++;
         if (cleanupFrameCounter >= cleanupFrameInterval)
         {
@@ -201,18 +198,18 @@ public class ObstacleSpawner : MonoBehaviour
                 float total = magnetSpawnChance + nitroSpawnChance + doubleCoinSpawnChance + shieldSpawnChance;
                 float roll = UnityEngine.Random.Range(0f, total);
                 int pLane = UnityEngine.Random.Range(0, 3);
-                bool spawned = false;
+                GameObject spawnedPowerUp = null;
 
                 if (roll < magnetSpawnChance)
-                    spawned = PlaceObject(magnetPool, pLane, baseRotation, magnetRotationOffset, pos, right, up, magnetHeightOffset);
+                    spawnedPowerUp = PlaceObject(magnetPool, pLane, baseRotation, magnetRotationOffset, pos, right, up, magnetHeightOffset);
                 else if (roll < magnetSpawnChance + nitroSpawnChance)
-                    spawned = PlaceObject(nitroPool, pLane, baseRotation, nitroRotationOffset, pos, right, up, nitroHeightOffset);
+                    spawnedPowerUp = PlaceObject(nitroPool, pLane, baseRotation, nitroRotationOffset, pos, right, up, nitroHeightOffset);
                 else if (roll < magnetSpawnChance + nitroSpawnChance + doubleCoinSpawnChance)
-                    spawned = PlaceObject(doubleCoinPool, pLane, baseRotation, doubleCoinRotationOffset, pos, right, up, doubleCoinHeightOffset);
+                    spawnedPowerUp = PlaceObject(doubleCoinPool, pLane, baseRotation, doubleCoinRotationOffset, pos, right, up, doubleCoinHeightOffset);
                 else
-                    spawned = PlaceObject(shieldPool, pLane, baseRotation, shieldRotationOffset, pos, right, up, shieldHeightOffset);
+                    spawnedPowerUp = PlaceObject(shieldPool, pLane, baseRotation, shieldRotationOffset, pos, right, up, shieldHeightOffset);
 
-                if (spawned)
+                if (spawnedPowerUp != null)
                 {
                     usedLanes.Add(pLane);
                     currentPowerUpCooldown = minSpawnsBetweenPowerUps;
@@ -221,8 +218,8 @@ public class ObstacleSpawner : MonoBehaviour
         }
 
         // ── ENGEL ─────────────────────────────────────────────────────────────
-        bool spawnObstacle = !playerCar.isNitroActive && !playerCar.isNitroEnding
-                           && obstaclePools.Count > 0;
+        // DÜZELTME: Nitro bitiyorsa (isNitroEnding) engeller yeniden doğmaya başlasın.
+        bool spawnObstacle = (!playerCar.isNitroActive || playerCar.isNitroEnding) && obstaclePools.Count > 0;
 
         if (spawnObstacle)
         {
@@ -232,7 +229,17 @@ public class ObstacleSpawner : MonoBehaviour
 
             int lane = obstacleLanes[UnityEngine.Random.Range(0, obstacleLanes.Count)];
             int poolIndex = UnityEngine.Random.Range(0, obstaclePools.Count);
-            PlaceObject(obstaclePools[poolIndex], lane, baseRotation, obstacleRotationOffset, pos, right, up, obstacleHeightOffset);
+            
+            GameObject spawnedObstacle = PlaceObject(obstaclePools[poolIndex], lane, baseRotation, obstacleRotationOffset, pos, right, up, obstacleHeightOffset);
+            
+            // EĞER NİTRO BİTİYORSA YANIP SÖNDÜR
+            if (spawnedObstacle != null && playerCar.isNitroEnding)
+            {
+                BlinkEffect blinker = spawnedObstacle.GetComponent<BlinkEffect>();
+                if (blinker == null) blinker = spawnedObstacle.AddComponent<BlinkEffect>(); 
+                blinker.StartBlinking(2.0f); 
+            }
+
             if (!usedLanes.Contains(lane)) usedLanes.Add(lane);
         }
 
@@ -250,11 +257,12 @@ public class ObstacleSpawner : MonoBehaviour
         }
     }
 
-    bool PlaceObject(List<GameObject> pool, int lane, Quaternion baseRot, Vector3 rotOffset,
+    // ARTIK BOOL DEĞİL, GAMEOBJECT DÖNDÜRÜYOR (Efekt Ekleyebilmek İçin)
+    GameObject PlaceObject(List<GameObject> pool, int lane, Quaternion baseRot, Vector3 rotOffset,
                      float3 splinePos, float3 right, float3 up, float heightOffset)
     {
         GameObject obj = GetPooled(pool);
-        if (obj == null) return false;
+        if (obj == null) return null;
 
         float xPos = (lane - 1) * laneDistance;
         Vector3 finalPos = (Vector3)splinePos + (Vector3)right * xPos + (Vector3)up * heightOffset;
@@ -264,7 +272,7 @@ public class ObstacleSpawner : MonoBehaviour
         obj.SetActive(true);
 
         activeSpawns.Add(new ActiveObject { obj = obj });
-        return true;
+        return obj;
     }
 
     GameObject GetPooled(List<GameObject> pool)
@@ -272,5 +280,44 @@ public class ObstacleSpawner : MonoBehaviour
         foreach (GameObject obj in pool)
             if (obj != null && !obj.activeInHierarchy) return obj;
         return null;
+    }
+}
+
+// YARDIMCI YANIP SÖNME KODU
+public class BlinkEffect : MonoBehaviour
+{
+    private float blinkDuration;
+    private float timer;
+    private MeshRenderer[] renderers;
+
+    public void StartBlinking(float duration)
+    {
+        blinkDuration = duration;
+        timer = 0;
+        renderers = GetComponentsInChildren<MeshRenderer>();
+    }
+
+    void Update()
+    {
+        if (timer < blinkDuration)
+        {
+            timer += Time.deltaTime;
+            bool isVisible = Mathf.PingPong(Time.time * 15f, 1f) > 0.5f;
+            foreach(MeshRenderer mr in renderers) mr.enabled = isVisible;
+            if (timer >= blinkDuration) foreach(MeshRenderer mr in renderers) mr.enabled = true;
+        }
+    }
+
+    // DÜZELTİLEN KISIM BURASI
+    void OnDisable()
+    {
+        if (renderers != null) 
+        {
+            foreach(MeshRenderer mr in renderers) mr.enabled = true;
+        }
+        
+        // Obje ekrandan çıkıp havuza döndüğünde sayacı dolu gösteriyoruz.
+        // Böylece ileride normal bir engel olarak doğduğunda yarım kalan yanıp sönmeye devam etmeyecek!
+        timer = blinkDuration; 
     }
 }
