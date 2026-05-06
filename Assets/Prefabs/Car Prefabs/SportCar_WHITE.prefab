@@ -474,7 +474,7 @@ MonoBehaviour:
   isNitroActive: 0
   isNitroEnding: 0
   nitroDuration: 5
-  nitroSpeedMultiplier: 1.8
+  nitroSpeedMultiplier: 1.5
   isDoubleCoinActive: 0
   doubleCoinDuration: 10
   isShieldActive: 0
