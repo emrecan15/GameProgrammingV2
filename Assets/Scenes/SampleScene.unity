@@ -1811,7 +1811,7 @@ MonoBehaviour:
   speedBumpPoolSize: 1
   speedBumpRotationOffset: {x: 0, y: 90, z: 0}
   speedBumpHeightOffset: 0
-  speedBumpSpawnChance: 25
+  speedBumpSpawnChance: 5
   speedBumpMinSpeed: 50
   coinPrefab: {fileID: 6954758372675618198, guid: 6a301d09debaf1e4a8d3e2657cc44a96, type: 3}
   coinPoolSize: 30

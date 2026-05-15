@@ -61,7 +61,7 @@ public class CarController : MonoBehaviour
     private float baseForwardSpeed;
     private bool isDead;
 
-    private float initialSpeed; // YENİ: Arabanın ilk hızını hafızada tutmak için
+    private float initialSpeed; 
 
     private float totalDistanceTraveled;
 
@@ -88,7 +88,7 @@ public class CarController : MonoBehaviour
 
         currentLane = 1;
 
-        initialSpeed = forwardSpeed; // YENİ: Oyun başlarken ilk hızı kaydet
+        initialSpeed = forwardSpeed; 
         baseForwardSpeed = forwardSpeed;
 
         if (shieldVisual != null) shieldVisual.SetActive(false);
@@ -227,7 +227,6 @@ public class CarController : MonoBehaviour
             }
             else
             {
-                // YENİ: Hızı ve ivme limitini anında ilk başlama hızına sıfırla!
                 baseForwardSpeed = initialSpeed; 
                 forwardSpeed = initialSpeed; 
 
@@ -311,8 +310,13 @@ public class CarController : MonoBehaviour
         isNitroEnding = false;
         if (PowerUpUIManager.Instance != null) PowerUpUIManager.Instance.ShowPowerUp("Nitro");
 
+        // Engelleri temizle
         foreach (GameObject obs in GameObject.FindGameObjectsWithTag("Obstacle"))
             obs.SetActive(false);
+
+        // YENİ: Kasisleri de temizle
+        foreach (GameObject bump in GameObject.FindGameObjectsWithTag("SpeedBump"))
+            bump.SetActive(false);
 
         float timer = nitroDuration;
         while (timer > 0f)

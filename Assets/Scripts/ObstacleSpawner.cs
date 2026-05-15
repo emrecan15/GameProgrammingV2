@@ -260,7 +260,10 @@ public class ObstacleSpawner : MonoBehaviour
         }
 
         // ── YENİ: KASİS (Hız Sınırını Geçince Çıkar) ──────────────────────────
-        if (playerCar.forwardSpeed > speedBumpMinSpeed && speedBumpPool.Count > 0 && UnityEngine.Random.Range(0f, 100f) <= speedBumpSpawnChance)
+        // YENİ: Sadece Nitro basılı değilse veya bitmek üzereyse çıksın
+        bool canSpawnSpeedBump = (!playerCar.isNitroActive || playerCar.isNitroEnding);
+
+        if (canSpawnSpeedBump && playerCar.forwardSpeed > speedBumpMinSpeed && speedBumpPool.Count > 0 && UnityEngine.Random.Range(0f, 100f) <= speedBumpSpawnChance)
         {
             List<int> bumpLanes = new List<int> { 0, 1, 2 };
             foreach (int l in usedLanes) bumpLanes.Remove(l);
