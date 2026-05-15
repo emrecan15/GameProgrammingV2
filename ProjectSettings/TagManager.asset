@@ -10,6 +10,7 @@ TagManager:
   - Nitro
   - DoubleCoin
   - Shield
+  - SpeedBump
   layers:
   - Default
   - TransparentFX

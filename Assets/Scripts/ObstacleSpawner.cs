@@ -11,6 +11,14 @@ public class ObstacleSpawner : MonoBehaviour
     public Vector3 obstacleRotationOffset;
     public float obstacleHeightOffset = 0f;
 
+    [Header("Havuz Ayarları (Kasis - Yavaşlatıcı)")]
+    public GameObject speedBumpPrefab;
+    public int speedBumpPoolSize = 3;
+    public Vector3 speedBumpRotationOffset;
+    public float speedBumpHeightOffset = 0f;
+    [Range(0f, 100f)] public float speedBumpSpawnChance = 25f;
+    public float speedBumpMinSpeed = 50f; // 50 hızından sonra çıkar
+
     [Header("Havuz Ayarları (Altın)")]
     public GameObject coinPrefab;
     public int coinPoolSize = 30;
@@ -59,6 +67,7 @@ public class ObstacleSpawner : MonoBehaviour
     private float cachedSplineLength;
 
     private List<List<GameObject>> obstaclePools;
+    private List<GameObject> speedBumpPool;
     private List<GameObject> coinPool;
     private List<GameObject> magnetPool;
     private List<GameObject> nitroPool;
@@ -71,7 +80,7 @@ public class ObstacleSpawner : MonoBehaviour
     private float lastSpawnDist;
     private int currentPowerUpCooldown;
 
-    private int lastObstaclePoolIndex = -1; // YENİ: Peşpeşe aynı aracı engellemek için hafıza
+    private int lastObstaclePoolIndex = -1; 
 
     private int cleanupFrameInterval = 10;
     private int cleanupFrameCounter = 0;
@@ -101,6 +110,7 @@ public class ObstacleSpawner : MonoBehaviour
             foreach (GameObject prefab in obstaclePrefabs)
                 obstaclePools.Add(CreatePool(prefab, poolSizePerPrefab));
 
+        speedBumpPool = CreatePool(speedBumpPrefab, speedBumpPoolSize);
         coinPool = CreatePool(coinPrefab, coinPoolSize);
         magnetPool = CreatePool(magnetPrefab, magnetPoolSize);
         nitroPool = CreatePool(nitroPrefab, nitroPoolSize);
@@ -220,7 +230,6 @@ public class ObstacleSpawner : MonoBehaviour
         }
 
         // ── ENGEL ─────────────────────────────────────────────────────────────
-        // DÜZELTME: Nitro bitiyorsa (isNitroEnding) engeller yeniden doğmaya başlasın.
         bool spawnObstacle = (!playerCar.isNitroActive || playerCar.isNitroEnding) && obstaclePools.Count > 0;
 
         if (spawnObstacle)
@@ -232,17 +241,14 @@ public class ObstacleSpawner : MonoBehaviour
             int lane = obstacleLanes[UnityEngine.Random.Range(0, obstacleLanes.Count)];
             int poolIndex = UnityEngine.Random.Range(0, obstaclePools.Count);
 
-            // YENİ EKLENEN KISIM: Peşpeşe aynı aracın gelmesini engeller
             if (obstaclePools.Count > 1 && poolIndex == lastObstaclePoolIndex)
             {
-                // Eğer rastgelelik yine bir önceki aracı seçtiyse, zorla bir sonrakine geç
                 poolIndex = (poolIndex + 1) % obstaclePools.Count;
             }
-            lastObstaclePoolIndex = poolIndex; // Hafızayı güncelle
+            lastObstaclePoolIndex = poolIndex; 
 
             GameObject spawnedObstacle = PlaceObject(obstaclePools[poolIndex], lane, baseRotation, obstacleRotationOffset, pos, right, up, obstacleHeightOffset);
 
-            // EĞER NİTRO BİTİYORSA YANIP SÖNDÜR
             if (spawnedObstacle != null && playerCar.isNitroEnding)
             {
                 BlinkEffect blinker = spawnedObstacle.GetComponent<BlinkEffect>();
@@ -251,6 +257,20 @@ public class ObstacleSpawner : MonoBehaviour
             }
 
             if (!usedLanes.Contains(lane)) usedLanes.Add(lane);
+        }
+
+        // ── YENİ: KASİS (Hız Sınırını Geçince Çıkar) ──────────────────────────
+        if (playerCar.forwardSpeed > speedBumpMinSpeed && speedBumpPool.Count > 0 && UnityEngine.Random.Range(0f, 100f) <= speedBumpSpawnChance)
+        {
+            List<int> bumpLanes = new List<int> { 0, 1, 2 };
+            foreach (int l in usedLanes) bumpLanes.Remove(l);
+
+            if (bumpLanes.Count > 0)
+            {
+                int lane = bumpLanes[UnityEngine.Random.Range(0, bumpLanes.Count)];
+                PlaceObject(speedBumpPool, lane, baseRotation, speedBumpRotationOffset, pos, right, up, speedBumpHeightOffset);
+                if (!usedLanes.Contains(lane)) usedLanes.Add(lane); 
+            }
         }
 
         // ── COIN ──────────────────────────────────────────────────────────────
@@ -267,7 +287,6 @@ public class ObstacleSpawner : MonoBehaviour
         }
     }
 
-    // ARTIK BOOL DEĞİL, GAMEOBJECT DÖNDÜRÜYOR (Efekt Ekleyebilmek İçin)
     GameObject PlaceObject(List<GameObject> pool, int lane, Quaternion baseRot, Vector3 rotOffset,
                      float3 splinePos, float3 right, float3 up, float heightOffset)
     {
@@ -293,7 +312,6 @@ public class ObstacleSpawner : MonoBehaviour
     }
 }
 
-// YARDIMCI YANIP SÖNME KODU
 public class BlinkEffect : MonoBehaviour
 {
     private float blinkDuration;
@@ -318,7 +336,6 @@ public class BlinkEffect : MonoBehaviour
         }
     }
 
-    // DÜZELTİLEN KISIM BURASI
     void OnDisable()
     {
         if (renderers != null)
@@ -326,8 +343,6 @@ public class BlinkEffect : MonoBehaviour
             foreach (MeshRenderer mr in renderers) mr.enabled = true;
         }
 
-        // Obje ekrandan çıkıp havuza döndüğünde sayacı dolu gösteriyoruz.
-        // Böylece ileride normal bir engel olarak doğduğunda yarım kalan yanıp sönmeye devam etmeyecek!
         timer = blinkDuration;
     }
 }

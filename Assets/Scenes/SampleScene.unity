@@ -1807,6 +1807,12 @@ MonoBehaviour:
   poolSizePerPrefab: 3
   obstacleRotationOffset: {x: 0, y: 0, z: 0}
   obstacleHeightOffset: 0
+  speedBumpPrefab: {fileID: 189655233365841636, guid: 26473d7831cba604bb81dbde98b2932f, type: 3}
+  speedBumpPoolSize: 1
+  speedBumpRotationOffset: {x: 0, y: 90, z: 0}
+  speedBumpHeightOffset: 0
+  speedBumpSpawnChance: 25
+  speedBumpMinSpeed: 50
   coinPrefab: {fileID: 6954758372675618198, guid: 6a301d09debaf1e4a8d3e2657cc44a96, type: 3}
   coinPoolSize: 30
   coinRotationOffset: {x: 0, y: 0, z: 0}

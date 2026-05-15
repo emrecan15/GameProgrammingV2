@@ -7,9 +7,10 @@ public class CarController : MonoBehaviour
 {
     [Header("Efektler (SFX)")]
     public AudioSource driftAudio;
-    public AudioSource sfxSource; // YENİ: Efektleri çalacak kaynak
-    public AudioClip powerUpPickupSound; // YENİ: Güçlendirici alma sesi
-    public AudioClip shieldBreakSound; // YENİ: Kalkan kırılma/bitme sesi
+    public AudioSource sfxSource;
+    public AudioClip powerUpPickupSound; 
+    public AudioClip shieldBreakSound; 
+    public AudioClip speedBumpSound; // Kasis zıplama sesi
 
     [Header("Spline Ayarları")]
     public SplineContainer trackSpline;
@@ -60,6 +61,8 @@ public class CarController : MonoBehaviour
     private float baseForwardSpeed;
     private bool isDead;
 
+    private float initialSpeed; // YENİ: Arabanın ilk hızını hafızada tutmak için
+
     private float totalDistanceTraveled;
 
     private Coroutine magnetCoroutine;
@@ -84,6 +87,8 @@ public class CarController : MonoBehaviour
         if (cam != null) cam.target = this.transform;
 
         currentLane = 1;
+
+        initialSpeed = forwardSpeed; // YENİ: Oyun başlarken ilk hızı kaydet
         baseForwardSpeed = forwardSpeed;
 
         if (shieldVisual != null) shieldVisual.SetActive(false);
@@ -190,7 +195,6 @@ public class CarController : MonoBehaviour
             {
                 isShieldActive = false;
                 
-                // YENİ: Kalkan çarpışmayla kırıldığında ses çal
                 if (sfxSource != null && shieldBreakSound != null) sfxSource.PlayOneShot(shieldBreakSound);
 
                 if (shieldVisual != null) shieldVisual.SetActive(false);
@@ -215,6 +219,26 @@ public class CarController : MonoBehaviour
                 if (GameManager.Instance != null) GameManager.Instance.GameOver();
             }
         }
+        else if (other.CompareTag("SpeedBump"))
+        {
+            if (isNitroActive) 
+            {
+                other.gameObject.SetActive(false);
+            }
+            else
+            {
+                // YENİ: Hızı ve ivme limitini anında ilk başlama hızına sıfırla!
+                baseForwardSpeed = initialSpeed; 
+                forwardSpeed = initialSpeed; 
+
+                if (sfxSource != null && speedBumpSound != null) 
+                {
+                    sfxSource.PlayOneShot(speedBumpSound);
+                }
+
+                other.gameObject.SetActive(false);
+            }
+        }
         else if (other.CompareTag("Coin"))
         {
             if (GameManager.Instance != null)
@@ -226,35 +250,34 @@ public class CarController : MonoBehaviour
         }
         else if (other.CompareTag("Magnet"))
         {
-            PlayPowerUpSound(); // YENİ: Ses Çal
+            PlayPowerUpSound(); 
             if (magnetCoroutine != null) StopCoroutine(magnetCoroutine);
             magnetCoroutine = StartCoroutine(MagnetRoutine());
             other.gameObject.SetActive(false);
         }
         else if (other.CompareTag("Nitro"))
         {
-            PlayPowerUpSound(); // YENİ: Ses Çal
+            PlayPowerUpSound(); 
             if (nitroCoroutine != null) StopCoroutine(nitroCoroutine);
             nitroCoroutine = StartCoroutine(NitroRoutine());
             other.gameObject.SetActive(false);
         }
         else if (other.CompareTag("DoubleCoin"))
         {
-            PlayPowerUpSound(); // YENİ: Ses Çal
+            PlayPowerUpSound(); 
             if (doubleCoinCoroutine != null) StopCoroutine(doubleCoinCoroutine);
             doubleCoinCoroutine = StartCoroutine(DoubleCoinRoutine());
             other.gameObject.SetActive(false);
         }
         else if (other.CompareTag("Shield"))
         {
-            PlayPowerUpSound(); // YENİ: Ses Çal
+            PlayPowerUpSound(); 
             if (shieldCoroutine != null) StopCoroutine(shieldCoroutine);
             shieldCoroutine = StartCoroutine(ShieldRoutine());
             other.gameObject.SetActive(false);
         }
     }
 
-    // YENİ: Güçlendirici sesini tetikleyen yardımcı fonksiyon
     private void PlayPowerUpSound()
     {
         if (sfxSource != null && powerUpPickupSound != null)
@@ -352,7 +375,6 @@ public class CarController : MonoBehaviour
             yield return null;
         }
 
-        // YENİ: Kalkan süresi dolup kendi kendine kapandığında da kırılma sesini çal
         if (isShieldActive)
         {
             if (sfxSource != null && shieldBreakSound != null) sfxSource.PlayOneShot(shieldBreakSound);
