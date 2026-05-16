@@ -324,7 +324,7 @@ MonoBehaviour:
   trackSpline: {fileID: 869984760}
   playerCar: {fileID: 0}
   roadPrefabs:
-  - {fileID: 4775358128559842662, guid: 80a04bcbd31ec7a4e9ca629fd50f3b0d, type: 3}
+  - {fileID: 4775358128559842662, guid: 79b937f0018afa84095505790ae006ad, type: 3}
   - {fileID: 4775358128559842662, guid: 561a8e2288dc87240807c59bbf2664a4, type: 3}
   - {fileID: 4775358128559842662, guid: ab721de900964d446b8caac97b9bf001, type: 3}
   - {fileID: 4775358128559842662, guid: def072b4b6ce60845a66c762b1282355, type: 3}
@@ -340,6 +340,8 @@ MonoBehaviour:
   - {fileID: 4775358128559842662, guid: 23a19f53c655b4745b3c917efebdabc5, type: 3}
   - {fileID: 4775358128559842662, guid: 1a79825f763e8df498a8df83771a467a, type: 3}
   - {fileID: 4775358128559842662, guid: b46d178afe517c34d9347dac95defb3d, type: 3}
+  - {fileID: 4775358128559842662, guid: 885346c66c5d4614a8f397d7e45b3fda, type: 3}
+  - {fileID: 4775358128559842662, guid: 80a04bcbd31ec7a4e9ca629fd50f3b0d, type: 3}
   roadLength: 30
   amountOfRoadsOnScreen: 7
   tunnelStartPrefab: {fileID: 4775358128559842662, guid: ed25645ed113e1b4ea1f521ed101b152, type: 3}
@@ -3510,6 +3512,7 @@ MonoBehaviour:
   pauseButtonHUD: {fileID: 831572222}
   carController: {fileID: 0}
   ambienceAudio: {fileID: 0}
+  musicAudio: {fileID: 0}
   pauseScreen: {fileID: 808777121}
   gameOverScreen: {fileID: 1971737838}
   finalScoreText: {fileID: 956800109}
