@@ -5,12 +5,27 @@ using UnityEngine.Splines;
 
 public class CarController : MonoBehaviour
 {
+    
     [Header("Efektler (SFX)")]
     public AudioSource driftAudio;
     public AudioSource sfxSource;
-    public AudioClip powerUpPickupSound; 
-    public AudioClip shieldBreakSound; 
-    public AudioClip speedBumpSound; // Kasis zıplama sesi
+    public AudioClip powerUpPickupSound;
+    public AudioClip shieldBreakSound;
+    public AudioClip speedBumpSound;
+    public float speedBumpVolume = 1f;
+    public AudioClip coinPickupSound;
+    public float coinPickupVolume = 0.5f;
+    public AudioClip crashSound;
+    public float crashVolume = 5f;
+
+    [Header("Araç Sesleri")]
+    public AudioSource engineAudio;
+    public AudioClip hornSound;
+
+    public float minEnginePitch = 0.85f;
+    public float maxEnginePitch = 1.35f;
+    public float minEngineVolume = 0.20f;
+    public float maxEngineVolume = 0.45f;
 
     [Header("Spline Ayarları")]
     public SplineContainer trackSpline;
@@ -100,6 +115,12 @@ public class CarController : MonoBehaviour
         QualitySettings.vSyncCount = 0;
 
         totalDistanceTraveled = 0f;
+
+        if (engineAudio != null)
+        {
+            engineAudio.loop = true;
+            engineAudio.Play();
+        }
     }
 
     void Update()
@@ -109,6 +130,16 @@ public class CarController : MonoBehaviour
         HandleSpeed();
         HandleInput();
         CalculateMovement();
+        UpdateEngineSound();
+
+
+        if (Keyboard.current.hKey.wasPressedThisFrame)
+        {
+            if (sfxSource != null && hornSound != null)
+            {
+                sfxSource.PlayOneShot(hornSound);
+            }
+        }
 
         if (PowerUpUIManager.Instance != null)
         {
@@ -209,6 +240,16 @@ public class CarController : MonoBehaviour
                 isDead = true;
                 forwardSpeed = 0f;
 
+                if (engineAudio != null)
+                {
+                    engineAudio.Stop();
+                }
+
+                if (sfxSource != null && crashSound != null)
+                {
+                    sfxSource.PlayOneShot(crashSound, crashVolume);
+                }
+
                 if (magnetCoroutine != null) StopCoroutine(magnetCoroutine);
                 if (nitroCoroutine != null) StopCoroutine(nitroCoroutine);
                 if (doubleCoinCoroutine != null) StopCoroutine(doubleCoinCoroutine);
@@ -227,12 +268,24 @@ public class CarController : MonoBehaviour
             }
             else
             {
+                /* set currentSpeed to initialSpeed
+                 
                 baseForwardSpeed = initialSpeed; 
-                forwardSpeed = initialSpeed; 
+                forwardSpeed = initialSpeed;
+                */
+
+                
+                forwardSpeed *= 0.8f;
+
+                baseForwardSpeed = forwardSpeed;
+
+                forwardSpeed = Mathf.Max(forwardSpeed, initialSpeed);
+                baseForwardSpeed = Mathf.Max(baseForwardSpeed, initialSpeed);
+
 
                 if (sfxSource != null && speedBumpSound != null) 
                 {
-                    sfxSource.PlayOneShot(speedBumpSound);
+                    sfxSource.PlayOneShot(speedBumpSound,speedBumpVolume);
                 }
 
                 other.gameObject.SetActive(false);
@@ -243,8 +296,17 @@ public class CarController : MonoBehaviour
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.AddCoin();
-                if (isDoubleCoinActive) GameManager.Instance.AddCoin();
+
+                if (isDoubleCoinActive)
+                    GameManager.Instance.AddCoin();
             }
+
+            // Coin sesi
+            if (sfxSource != null && coinPickupSound != null)
+            {
+                sfxSource.PlayOneShot(coinPickupSound, coinPickupVolume);
+            }
+
             other.gameObject.SetActive(false);
         }
         else if (other.CompareTag("Magnet"))
@@ -388,5 +450,15 @@ public class CarController : MonoBehaviour
         if (blinker != null) blinker.StopBlinking();
         if (shieldVisual != null) shieldVisual.SetActive(false);
         if (PowerUpUIManager.Instance != null) PowerUpUIManager.Instance.HidePowerUp("Shield");
+    }
+
+    void UpdateEngineSound()
+    {
+        if (engineAudio == null) return;
+
+        float speedPercent = Mathf.InverseLerp(initialSpeed, maxSpeed, forwardSpeed);
+
+        engineAudio.pitch = Mathf.Lerp(minEnginePitch, maxEnginePitch, speedPercent);
+        engineAudio.volume = Mathf.Lerp(minEngineVolume, maxEngineVolume, speedPercent);
     }
 }

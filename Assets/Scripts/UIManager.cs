@@ -8,6 +8,12 @@ public class UIManager : MonoBehaviour
     [Header("Oyun Ýçi Arayüz (HUD)")]
     public GameObject pauseButtonHUD;
 
+    [Header("Araç Referansý")]
+    public CarController carController;
+
+    [Header("Ses Yönetimi")]
+    public AudioSource ambienceAudio;
+
     [Header("Paneller")]
     public GameObject pauseScreen;
     public GameObject gameOverScreen; // Figma'da Game Over çizince buraya koyacaksýn
@@ -25,6 +31,16 @@ public class UIManager : MonoBehaviour
 
     void Start()
     {
+        if (carController == null)
+            carController = FindFirstObjectByType<CarController>();
+
+        if (ambienceAudio == null)
+        {
+            GameObject audioManager = GameObject.Find("AudioManager");
+            if (audioManager != null)
+                ambienceAudio = audioManager.GetComponent<AudioSource>();
+        }
+
         if (pauseScreen != null) pauseScreen.SetActive(false);
         if (gameOverScreen != null) gameOverScreen.SetActive(false);
         if (pauseButtonHUD != null) pauseButtonHUD.SetActive(true);
@@ -39,8 +55,16 @@ public class UIManager : MonoBehaviour
         isPaused = true;
         Time.timeScale = 0f;
 
+        if (carController != null && carController.engineAudio != null)
+            carController.engineAudio.Pause();
+
+        if (ambienceAudio != null)
+            ambienceAudio.Pause();
+
         if (pauseScreen != null) pauseScreen.SetActive(true);
         if (pauseButtonHUD != null) pauseButtonHUD.SetActive(false);
+
+
     }
 
     public void ResumeGame()
@@ -49,6 +73,12 @@ public class UIManager : MonoBehaviour
 
         isPaused = false;
         Time.timeScale = 1f;
+
+        if (carController != null && carController.engineAudio != null)
+            carController.engineAudio.UnPause();
+
+        if (ambienceAudio != null)
+            ambienceAudio.UnPause();
 
         if (pauseScreen != null) pauseScreen.SetActive(false);
         if (pauseButtonHUD != null) pauseButtonHUD.SetActive(true);
@@ -60,6 +90,12 @@ public class UIManager : MonoBehaviour
     {
         if (isGameOver) return;
         isGameOver = true;
+
+        if (carController != null && carController.engineAudio != null)
+            carController.engineAudio.Stop();
+
+        if (ambienceAudio != null)
+            ambienceAudio.Stop();
 
         // Oyun duraklatýlmýþsa Pause menüsünü kapat
         if (pauseScreen != null) pauseScreen.SetActive(false);
