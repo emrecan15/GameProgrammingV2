@@ -13,6 +13,7 @@ public class UIManager : MonoBehaviour
 
     [Header("Ses Yönetimi")]
     public AudioSource ambienceAudio;
+    public AudioSource musicAudio;
 
     [Header("Paneller")]
     public GameObject pauseScreen;
@@ -41,6 +42,14 @@ public class UIManager : MonoBehaviour
                 ambienceAudio = audioManager.GetComponent<AudioSource>();
         }
 
+        if (musicAudio == null)
+        {
+            GameObject musicManager = GameObject.Find("MusicManager");
+
+            if (musicManager != null)
+                musicAudio = musicManager.GetComponent<AudioSource>();
+        }
+
         if (pauseScreen != null) pauseScreen.SetActive(false);
         if (gameOverScreen != null) gameOverScreen.SetActive(false);
         if (pauseButtonHUD != null) pauseButtonHUD.SetActive(true);
@@ -61,6 +70,9 @@ public class UIManager : MonoBehaviour
         if (ambienceAudio != null)
             ambienceAudio.Pause();
 
+        if (musicAudio != null)
+            musicAudio.Pause();
+
         if (pauseScreen != null) pauseScreen.SetActive(true);
         if (pauseButtonHUD != null) pauseButtonHUD.SetActive(false);
 
@@ -80,6 +92,9 @@ public class UIManager : MonoBehaviour
         if (ambienceAudio != null)
             ambienceAudio.UnPause();
 
+        if (musicAudio != null)
+            musicAudio.UnPause();
+
         if (pauseScreen != null) pauseScreen.SetActive(false);
         if (pauseButtonHUD != null) pauseButtonHUD.SetActive(true);
     }
@@ -96,6 +111,9 @@ public class UIManager : MonoBehaviour
 
         if (ambienceAudio != null)
             ambienceAudio.Stop();
+
+        if (musicAudio != null)
+            musicAudio.Stop();
 
         // Oyun duraklatýlmýþsa Pause menüsünü kapat
         if (pauseScreen != null) pauseScreen.SetActive(false);
