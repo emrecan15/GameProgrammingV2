@@ -11,7 +11,7 @@ public class RoadManager : MonoBehaviour
 
     [Header("Normal Yol Ayarları")]
     public GameObject[] roadPrefabs;
-    public float roadLength = 26f;
+    public float roadLength = 30.4f;
     public int amountOfRoadsOnScreen = 7;
 
     [Header("Özel Yollar (Tünel & Köprü)")]
@@ -107,7 +107,10 @@ public class RoadManager : MonoBehaviour
         forward = math.normalize(forward);
         up = math.normalize(up);
 
+        
         spawnedObj.transform.position = (Vector3)pos;
+        
+
         spawnedObj.transform.rotation = Quaternion.LookRotation(forward, up);
         spawnedObj.SetActive(true);
 
